@@ -8,7 +8,7 @@ function App() {
       <header className="bg-white shadow fixed w-full z-10">
         <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <img src="/logo.png" alt="InvoiceAPI Logo" className="h-8 w-8" />
+            <img src="./logo.png" alt="InvoiceAPI Logo" className="h-8 w-8" />
             <span className="text-xl font-bold text-blue-600">InvoiceAPI by SidConsult</span>
           </div>
           <div className="space-x-6 text-sm text-gray-700">
