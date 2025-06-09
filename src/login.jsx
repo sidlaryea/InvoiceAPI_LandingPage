@@ -1,0 +1,93 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import {Link} from "react-router-dom";
+
+
+export default function Login() {
+  const [email, setemail] = useState("");
+  const [password, setPassword] = useState("");
+  
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    
+
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/Login/login`, {
+        email,
+        password,
+      });
+
+      const token = response.data.token;
+      if (token) {
+        localStorage.setItem("jwtToken", token);
+        navigate("/dashboard"); // Adjust as needed
+      } else {
+        setError("Invalid login response.");
+      }
+    
+    } catch (error) {
+      setError("Login failed. Check your credentials.");
+    console.error("Login error:", error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8" align="center">
+        <img src="./logo.png" alt="Logo" className="h-12 w-12 mb-2" />
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+          Sign in to InvoiceAPI
+        </h2>
+        {error && (
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="text" className="block text-sm font-medium text-gray-600">
+              
+            </label>
+            <input
+              type="text"
+              id="email"
+              required
+              value={email}
+              placeholder="Email"
+              onChange={(e) => setemail(e.target.value)}
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-600">
+              
+            </label>
+            <input
+              type="password"
+              id="password"
+              required
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition"
+          >
+            Sign In
+          </button>
+        </form>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don’t have an account? <Link to="/registration" className="text-blue-600 hover:underline">Register</Link>
+        </p>
+      </div>
+    </div>
+  );
+}

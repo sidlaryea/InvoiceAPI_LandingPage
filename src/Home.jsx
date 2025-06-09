@@ -3,6 +3,7 @@ import React, { useState,  } from 'react';
 import { Briefcase, Layers, Store, Play, Check, X, Menu, ChevronDown } from "lucide-react";
 import DemoPoster from '/DemoPoster.png';
 
+
 function Home() {
   // const [isPlaying, setIsPlaying] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -113,7 +114,7 @@ function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-1000">
             
-            <button onClick={() => navigate('/signup')}
+            <button onClick={() => navigate('/Registration')}
             className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-full hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl cursor-pointer">
               Start Free Trial
             </button>
