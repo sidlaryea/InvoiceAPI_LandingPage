@@ -12,8 +12,13 @@
     "deploy": "gh-pages -d dist --branch=gh-pages"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.1.2",
+    "@mui/styled-engine": "^7.1.1",
     "@tailwindcss/vite": "^4.1.7",
     "axios": "^1.9.0",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.511.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

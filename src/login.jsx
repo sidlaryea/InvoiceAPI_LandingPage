@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
+import {jwtDecode} from "jwt-decode";
 
 
 export default function Login() {
   const [email, setemail] = useState("");
   const [password, setPassword] = useState("");
+  
   
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -25,14 +27,18 @@ export default function Login() {
       const token = response.data.token;
       if (token) {
         localStorage.setItem("jwtToken", token);
+        // Decode token to get userId
+        const decodedToken = jwtDecode(token);
+        const userId = decodedToken.userId; // or whatever field contains the user ID
+        localStorage.setItem("userId", userId);
+
         navigate("/dashboard"); // Adjust as needed
       } else {
         setError("Invalid login response.");
       }
-    
     } catch (error) {
       setError("Login failed. Check your credentials.");
-    console.error("Login error:", error);
+      console.error("Login error:", error);
     }
   };
 
@@ -56,6 +62,7 @@ export default function Login() {
             <input
               type="text"
               id="email"
+              autoComplete="off"
               required
               value={email}
               placeholder="Email"
@@ -86,8 +93,13 @@ export default function Login() {
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
           Don’t have an account? <Link to="/registration" className="text-blue-600 hover:underline">Register</Link>
+          <p>Or Return To  <Link to="//" className="text-blue-600 hover:underline">Home</Link></p> 
         </p>
+      
       </div>
     </div>
+
+    
   );
+  
 }

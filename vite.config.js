@@ -6,5 +6,13 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/InvoiceAPI_LandingPage/',
-  
-})
+  server: {
+    proxy: {
+      '/Profile-images': {
+        target: 'http://localhost:5214',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
