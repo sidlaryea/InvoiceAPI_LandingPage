@@ -1,0 +1,130 @@
+firstName: '',
+    middleName: '',
+    lastName: '',
+    email: '',
+    countryId: '',
+    username: '',
+    password: '',
+    role: 'User',
+    profileImagePath: '',
+    phone: '',
+    industryId: ''
+  });
+=======
+  const [form, setForm] = useState({
+    businessName: '',
+    address: '',
+    taxId: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    email: '',
+    countryId: '',
+    username: '',
+    password: '',
+    role: 'User',
+    profileImagePath: '',
+    phone: '',
+    industryId: ''
+  });
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input type="text" placeholder="Business Name" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
+              <select name="industryId" value={form.industryId} onChange={handleChange} required className="w-full p-4 rounded-xl border-2 border-gray-200">
+                <option value="">Select an Industry</option>
+                {industries.map((industry) => (
+                  <option key={industry.Id} value={industry.Id}>{industry.name}</option>
+                ))}
+              </select>
+              <input type="text" placeholder="Address" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
+              <select name="countryId" value={form.countryId} onChange={handleChange} required className="w-full p-4 rounded-xl border-2 border-gray-200">
+                <option value="">Select a country</option>
+                {countries.map((country) => (
+                  <option key={country.id} value={country.id}>{getFlagEmoji(country.code)} {country.name}</option>
+                ))}
+              </select>
+              <input type="email" placeholder="Email" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
+              <input type="tel" name="phone" placeholder="Phone Number EX: (123) 456-7890" value={form.phone} onChange={(e) => handleChange({ target: { name: 'phone', value: formatPhone(e.target.value) } })} required className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3" />
+              <input type="text" placeholder="Tax ID Number" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
+              <input type="file" className="input bg-white border border-gray-300 rounded-lg px-4 py-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            </form>
+=======
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input
+                type="text"
+                name="businessName"
+                placeholder="Business Name"
+                value={form.businessName}
+                onChange={handleChange}
+                className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+              />
+              <select
+                name="industryId"
+                value={form.industryId}
+                onChange={handleChange}
+                required
+                className="w-full p-4 rounded-xl border-2 border-gray-200"
+              >
+                <option value="">Select an Industry</option>
+                {industries.map((industry) => (
+                  <option key={industry.Id} value={industry.Id}>
+                    {industry.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                name="address"
+                placeholder="Address"
+                value={form.address}
+                onChange={handleChange}
+                className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+              />
+              <select
+                name="countryId"
+                value={form.countryId}
+                onChange={handleChange}
+                required
+                className="w-full p-4 rounded-xl border-2 border-gray-200"
+              >
+                <option value="">Select a country</option>
+                {countries.map((country) => (
+                  <option key={country.id} value={country.id}>
+                    {getFlagEmoji(country.code)} {country.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={handleChange}
+                className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+              />
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Phone Number EX: (123) 456-7890"
+                value={form.phone}
+                onChange={(e) =>
+                  handleChange({ target: { name: "phone", value: formatPhone(e.target.value) } })
+                }
+                required
+                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3"
+              />
+              <input
+                type="text"
+                name="taxId"
+                placeholder="Tax ID Number"
+                value={form.taxId}
+                onChange={handleChange}
+                className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+              />
+              <input
+                type="file"
+                className="input bg-white border border-gray-300 rounded-lg px-4 py-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+            </form>

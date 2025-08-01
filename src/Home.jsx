@@ -230,7 +230,7 @@ function Home() {
                 <p className="text-gray-500">Forever free</p>
               </div>
               <ul className="text-gray-600 mb-8 space-y-3 flex-grow">
-                <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Up to 50 invoices/month</li>
+                <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Up to 20 invoices/month</li>
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Email support</li>
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Export as PDF</li>
               </ul>

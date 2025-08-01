@@ -47,7 +47,7 @@ export default function Dashboard() {
   
 const profileImageUrl = userProfile.profilePic
   ? `${import.meta.env.VITE_API_URL}/${userProfile.profilePic.replace(/\\/g, '/')}`
-  : '/user-placeholder.png'; 
+  : './user-placeholder.png'; 
  
     
 
@@ -291,7 +291,7 @@ const closeChangePasswordDialog = () => {
           {/* Navigation Links */}
           <div className="hidden md:flex space-x-6 text-sm font-medium text-gray-700 transition-colors group ml-auto mr-4">
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold underline">Dashboard</a>
-            <a href="./Create-invoice" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Generate Invoices</a>
+            <a href="./invoicedashboard" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Generate Invoices</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Billing</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">API Documentation</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Support</a>

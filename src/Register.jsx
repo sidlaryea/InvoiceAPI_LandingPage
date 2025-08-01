@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+//import Onboarding from './components/Onboarding'; // Adjust the import path as necessary
+import { useNavigate } from 'react-router-dom';
 
 function Register() {
-  const [form, setForm] = useState({ firstName: '', middleName: '', lastName: '', email: '', username: '', password: '',role: 'User', 
+  const [form, setForm] = useState({ firstName: '', middleName: '', lastName: '', email: '', countryId:'', username: '', password: '',role: 'User', 
   profileImagePath: '' });
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  
+  const [countries, setCountries] = useState([]);
+  const navigate = useNavigate();
   
   const [error, setError] = useState('');
 
@@ -15,6 +19,32 @@ function Register() {
   };
     
 
+ useEffect(() => {
+  axios.get("http://localhost:5214/api/Country")
+    .then((res) => {
+      const sortedCountries = res.data.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      setCountries(sortedCountries);
+    })
+    .catch((err) => console.error("Failed to fetch countries:", err));
+}, []);
+
+useEffect(() => {
+  if (apiKey) {
+    const timer = setTimeout(() => {
+      navigate("/login");
+    }, 15000); // Redirect after 15 seconds
+    return () => clearTimeout(timer);
+  }
+}, [apiKey, navigate]);
+
+const getFlagEmoji = (countryCode) => {
+  return countryCode
+    .toUpperCase()
+    .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+};
+
   const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
@@ -22,7 +52,7 @@ function Register() {
     setApiKey('');
     
     
-    if (!form.firstName || !form.lastName || !form.email || !form.username || !form.password) {
+    if (!form.firstName || !form.lastName || !form.email || !form.username || !form.password || !form.countryId) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
@@ -60,13 +90,17 @@ function Register() {
           <p className="text-gray-500 text-center">Sign up to get your API key and start generating invoices instantly.</p>
         </div>
         {apiKey  ?  (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+          <>
+           <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
             <h3 className="text-xl font-semibold text-green-700 mb-2">Registration Successful!</h3>
             <p className="text-green-800 mb-2">Your API Key:</p>
             <div className="bg-gray-100 rounded p-2 font-mono text-sm break-all mb-2">{apiKey}</div>
             <p className="text-gray-500 text-xs">Copy and store this key securely.</p>
-          </div>
-        ) : (
+           </div>
+
+            
+          </> 
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <input
               type="text"
@@ -104,6 +138,24 @@ function Register() {
               required
               className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none transition-colors text-lg"
             />
+            
+             <select
+                  name="countryId"
+                  value={form.countryId}
+                  onChange={handleChange}
+                  required
+                  className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none transition-colors text-lg"
+                >
+                  <option value="">Select a country</option>
+                  {countries.map((country) => (
+                    <option key={country.id} value={country.id}>
+                      {getFlagEmoji(country.code)} {country.name}
+                    </option>
+                  ))}
+                </select>
+              
+            
+            
             <input
               type="text"
               name="username"
@@ -136,8 +188,8 @@ function Register() {
         {/* Conditional footer - Dashboard link OR default login link */}
 {apiKey ? (
   <div className="mt-6 text-center">
-    <Link to="/login" className="text-blue-600 hover:underline font-medium">
-      Click here to Login to your Dashboard
+     <Link to="/login" className="text-blue-600 hover:underline font-medium">
+       Proceed to Login to Complete Setup
     </Link>
   </div>
 ) : (

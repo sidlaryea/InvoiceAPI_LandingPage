@@ -24,15 +24,54 @@ export default function Login() {
         password,
       });
 
-      const token = response.data.token;
+      
+
+      const {token,setupComplete} = response.data;
+      
       if (token) {
         localStorage.setItem("jwtToken", token);
-        // Decode token to get userId
         const decodedToken = jwtDecode(token);
-        const userId = decodedToken.userId; // or whatever field contains the user ID
-        localStorage.setItem("userId", userId);
+        console.log("Decoded JWT:", decodedToken);
 
-        navigate("/dashboard"); // Adjust as needed
+        // Decode token to get userId
+        
+        const userId = decodedToken.userId; // or whatever field contains the user ID
+        const country = decodedToken.CountryName;
+        const countryCode=decodedToken.CountryCode;
+        localStorage.setItem("country",country)
+        localStorage.setItem("countryCode",countryCode)
+        localStorage.setItem("userId", userId);
+        
+        
+        
+         // Fetch API key info
+        const apiRes = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/ApiKey`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        // console.log("Full API Key Response:", apiRes.data);
+        
+        const apiKey = apiRes.data.key;
+        if (!apiKey) {
+        console.warn("API key missing in response.");
+        setError("API key not returned.");
+        return;
+      }
+
+      localStorage.setItem("apiKey", apiKey);
+      localStorage.setItem("setupComplete", setupComplete ? "true" : "false");
+
+
+        if (setupComplete) {
+        navigate("/dashboard");
+      } else {
+        navigate("/complete-setup");
+      }
       } else {
         setError("Invalid login response.");
       }
