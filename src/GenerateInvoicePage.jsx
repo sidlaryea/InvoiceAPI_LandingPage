@@ -1,8 +1,9 @@
 import { useState,useEffect } from "react";
-import { Plus, Trash2, Download, Save, Eye, Edit3, X, MoveRight  } from "lucide-react";
+import { Plus, Trash2, Download, Save, Eye, Edit3, X, MoveRight ,Send } from "lucide-react";
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
 import AutocompleteSearch from './components/AutocompleteSearch';
+
 
 export default function GenerateInvoicePage() {
   const [formData, setFormData] = useState({
@@ -54,14 +55,18 @@ const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
-    
+    const [invoices, setInvoices] = useState([]);
+    const [search, setSearch] = useState("");
+ const filteredInvoices = invoices.filter(inv =>
+  inv.invoiceNumber.toString().includes(search)
+);
    
     const [currentPage, setCurrentPage] = useState(1);  
-    const [invoices, setInvoices] = useState([]);
+    
     const invoicesPerPage = 5; // or any number you want
     const indexOfLastInvoice = currentPage * invoicesPerPage;
     const indexOfFirstInvoice = indexOfLastInvoice - invoicesPerPage;
-    const currentInvoices = invoices.slice(indexOfFirstInvoice, indexOfLastInvoice);
+    const currentInvoices = filteredInvoices.slice(indexOfFirstInvoice, indexOfLastInvoice);
     const totalPages = Math.ceil(invoices.length / invoicesPerPage);
     const [taxComponents, setTaxComponents] = useState([]); // Holds list of tax items from DB 
     const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -80,6 +85,8 @@ const showNotification = (message, type = 'success') => {
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
+
+    
      
   
     const openModal = () => setIsModalOpen(true);
@@ -99,6 +106,10 @@ const showNotification = (message, type = 'success') => {
   };
 
   
+ 
+
+
+
 const country = localStorage.getItem('country');
 const countryCode = localStorage.getItem('countryCode');
 
@@ -254,6 +265,7 @@ console.log("selectedInvoice", selectedInvoice);
       items: formData.items,
       dueDate: formData.dueDate,
       currency: formData.currency,
+      discountPercent:formData.discountPercent,
       country: formData.country,
       region: formData.region,
       totalTaxAmount: formData.totalTaxAmount,
@@ -438,6 +450,35 @@ const handleDownloadPDF = async (id) => {
   }
 };
 
+
+const handleSendInvoiceEmail = async (invoiceId) => {
+  try {
+    // Optional: show a loading toast
+    console.info("Sending invoice via email...");
+
+    const token = localStorage.getItem("jwtToken");
+    
+    const res = await axios.post(
+      `/api/invoices/${invoiceId}/send-email`, // Adjust to your API route
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Success
+    console.success(res.data.message || "Invoice sent successfully!");
+  } catch (error) {
+    console.error("Error sending invoice email:", error);
+    console.error(
+      error.response?.data?.message || "Failed to send invoice. Please try again."
+    );
+  }
+};
+
+
   return (
 
   <DashboardLayout
@@ -522,8 +563,25 @@ const handleDownloadPDF = async (id) => {
         {/* Left Column - Invoice List */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6 border-b">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">Invoices</h2>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+    {/* Search Input */}
+    <div className="flex-1">
+      <input
+        type="text"
+        placeholder="Search invoice by ID..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+      />
+    </div>
+              
+              
+              
+              
+              
+              
+              
+              
               <button
                 onClick={() => setIsCreating(true)}
                 className="bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors flex items-center gap-2"
@@ -540,7 +598,7 @@ const handleDownloadPDF = async (id) => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto"></div>
                 <p className="text-gray-500 mt-2">Loading...</p>
               </div>
-            ) : invoices.length === 0 ? (
+            ) : currentInvoices.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 No invoices found. Create your first invoice!
               </div>
@@ -624,35 +682,35 @@ const handleDownloadPDF = async (id) => {
             )}
           </div>
           <div className="flex justify-center items-center mt-3 space-x-2">
-  <button
-    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-    disabled={currentPage === 1}
-    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-  >
-    Prev
-  </button>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              >
+                Prev
+              </button>
 
-  {[...Array(totalPages).keys()].map((page) => (
-    <button
-      key={page + 1}
-      onClick={() => setCurrentPage(page + 1)}
-      className={`px-3 py-1 rounded ${
-        currentPage === page + 1 ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"
-      }`}
-    >
-      {page + 1}
-    </button>
-  ))}
+              {[...Array(totalPages).keys()].map((page) => (
+                <button
+                  key={page + 1}
+                  onClick={() => setCurrentPage(page + 1)}
+                  className={`px-3 py-1 rounded ${
+                    currentPage === page + 1 ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"
+                  }`}
+                >
+                  {page + 1}
+                </button>
+              ))}
 
-  <button
-    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-    disabled={currentPage === totalPages}
-    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-  >
-    Next
-  </button>
-</div>
-        </div>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
 
         {/* Right Column - Invoice Details or Create Form */}
         <div className="bg-white rounded-lg shadow-sm">
@@ -913,6 +971,7 @@ const handleDownloadPDF = async (id) => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-bold text-gray-900">Invoice Details</h2>
                   <div className="flex gap-2">
+                    
                     <button
                       onClick={() => handleDownloadPDF(selectedInvoice.id)}
                       className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors flex items-center gap-2"
@@ -920,12 +979,22 @@ const handleDownloadPDF = async (id) => {
                       <Download size={16} />
                       Download PDF
                     </button>
+                    
+                    {/* Send via Email */}
+                    <button
+                      onClick={() => handleSendInvoiceEmail(selectedInvoice.id)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 shadow-sm"
+                    >
+                      <Send size={16} />
+                      Send via Email
+                    </button>
                     <button
                       onClick={() => setSelectedInvoice(null)}
                       className="text-gray-500 hover:text-gray-700"
                     >
                       <X size={20} />
                     </button>
+
                   </div>
                 </div>
               </div>
@@ -933,7 +1002,7 @@ const handleDownloadPDF = async (id) => {
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Invoice Information</h3>
+                    <h3 className="text-lg  text-gray-900 mb-4 font-bold">Invoice Information</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Invoice Number:</span>
@@ -960,19 +1029,19 @@ const handleDownloadPDF = async (id) => {
 
                       <div className="flex justify-between">
                         <span className="text-gray-600">Balance Due:</span>
-                        <span className="font-medium">{(selectedInvoice.balanceDue)}</span>
+                        <span className="font-medium">{formatCurrency(selectedInvoice.balanceDue, selectedInvoice.currency)}</span>
                       </div>
 
                       <div className="flex justify-between">
                         <span className="text-gray-600">Amount Paid:</span>
-                        <span className="font-medium">{(selectedInvoice.amountPaid)}</span>
+                        <span className="font-medium">{formatCurrency(selectedInvoice.amountPaid, selectedInvoice.currency)}</span>
                       </div>
 
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Customer Information</h3>
                     <div className="space-y-2">
                       <div>
                         <span className="text-gray-600">Name:</span>

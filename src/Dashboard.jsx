@@ -292,7 +292,7 @@ const closeChangePasswordDialog = () => {
           <div className="hidden md:flex space-x-6 text-sm font-medium text-gray-700 transition-colors group ml-auto mr-4">
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold underline">Dashboard</a>
             <a href="./invoicedashboard" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Generate Invoices</a>
-            <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Billing</a>
+            <a href="./UpgradePage" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Billing</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">API Documentation</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Support</a>
           </div>

@@ -44,7 +44,7 @@ export default function Sidebar({ isSidebarOpen }) {
       <Link to="/customer" className="block hover:bg-gray-700 px-4 py-2 rounded">Customer Registration</Link>
       <Link to="/invoices" className="block hover:bg-gray-700 px-4 py-2 rounded">Generate Invoice</Link>
       <Link to="/payment" className="block hover:bg-gray-700 px-4 py-2 rounded">Payments</Link>
-      <Link to="/products" className="block hover:bg-gray-700 px-4 py-2 rounded">Products & Items</Link>
+      <Link to="/ProductItemPage" className="block hover:bg-gray-700 px-4 py-2 rounded">Products & Items</Link>
       
     </nav>
   </div>

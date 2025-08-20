@@ -11,6 +11,8 @@ import CustomerRegistrationForm from './CustomerRegistrationPage';
 import GenerateInvoicePage from './GenerateInvoicePage'; // New create invoice page
 import PaymentPage from './PaymentPage';
 import CompleteSetup from './CompleteSetup'; // New complete setup page
+import ProductItemPage from './ProductItemPage'; // New inventory management page
+import UpgradePage from './UpgradePage';
 
 
 function App() {
@@ -28,6 +30,10 @@ function App() {
         <Route path="/invoices" element={<GenerateInvoicePage />} /> {/* Redirect to Create Invoice*/}
         <Route path="/payment" element={<PaymentPage/>}/>
         <Route path="/complete-setup" element={<CompleteSetup/>} /> {/* Redirect all other paths to Home */}
+        <Route path="/ProductItemPage" element={<ProductItemPage />} /> {/* New inventory management page */}
+        <Route path="/UpgradePage" element={<UpgradePage />} /> {/* New inventory management page */}
+        
+        
 
         
       </Routes>
