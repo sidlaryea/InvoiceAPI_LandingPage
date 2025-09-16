@@ -3,6 +3,9 @@ import { Plus, Trash2, Download, Save, Eye, Edit3, X, MoveRight ,Send } from "lu
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
 import AutocompleteSearch from './components/AutocompleteSearch';
+import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
+import SuccessModal from "./components/Ui/SuccessModal";
+import { toast } from "react-hot-toast";
 
 
 export default function GenerateInvoicePage() {
@@ -31,11 +34,9 @@ const fetchInvoices = async () => {
         "X-Api-Key": apiKey, // Add this if required by your backend
       },
     });
-
     if (!res.ok) {
       throw new Error(`HTTP error! Status: ${res.status}`);
     }
-
     const data = await res.json();
     console.log("Fetched invoices:", data); // ✅ Debug log
     setInvoices(data);
@@ -43,7 +44,6 @@ const fetchInvoices = async () => {
     console.error("Failed to fetch invoices:", err);
   }
 };
-
 useEffect(() => {
   fetchInvoices();
 }, []);
@@ -85,6 +85,7 @@ const showNotification = (message, type = 'success') => {
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
+    const [showSuccess, setShowSuccess] = useState(false);
 
     
      
@@ -104,12 +105,6 @@ const showNotification = (message, type = 'success') => {
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
-
-  
- 
-
-
-
 const country = localStorage.getItem('country');
 const countryCode = localStorage.getItem('countryCode');
 
@@ -206,9 +201,10 @@ if (!token) {
     }
   };
 
-
+    
     fetchTaxesByCountry();
     fetchUserProfile();
+    
   }, [formData.country]);
 
   
@@ -459,7 +455,7 @@ const handleSendInvoiceEmail = async (invoiceId) => {
     const token = localStorage.getItem("jwtToken");
     
     const res = await axios.post(
-      `/api/invoices/${invoiceId}/send-email`, // Adjust to your API route
+      `${import.meta.env.VITE_API_URL}/api/Email/${invoiceId}/send-email`, // Adjust to your API route
       {},
       {
         headers: {
@@ -469,16 +465,18 @@ const handleSendInvoiceEmail = async (invoiceId) => {
     );
 
     // Success
-    console.success(res.data.message || "Invoice sent successfully!");
+    setShowSuccess(true);
+    console.log(res.data.message || "Invoice sent successfully!");
   } catch (error) {
     console.error("Error sending invoice email:", error);
-    console.error(
-      error.response?.data?.message || "Failed to send invoice. Please try again."
-    );
+   toast.error(
+        
+          "Failed to send invoice. Please try again."
+      );
   }
 };
 
-
+useApiInterceptor();
   return (
 
   <DashboardLayout
@@ -551,6 +549,7 @@ const handleSendInvoiceEmail = async (invoiceId) => {
             {invoices.filter(inv => inv.status === 'Draft').length}
           </div>
         </div>
+        
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-2">Total Value</h3>
           <div className="text-3xl font-bold text-gray-900">
@@ -764,6 +763,7 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                       Due Date
                     </label>
                     <input
+                    
                       type="date"
                       value={formData.dueDate}
                       onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
@@ -914,11 +914,13 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                     <span className="font-medium">{formatCurrency(calculateSubtotal(), formData.currency)}</span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
-  <span className="text-sm text-gray-600">Discount ({formData.discountPercent ?? 0}%):</span>
-  <span className="font-medium">
-    -{formatCurrency((calculateSubtotal() * (formData.discountPercent ?? 0)) / 100, formData.currency)}
-  </span>
-</div>
+                  <span className="text-sm text-gray-600">Discount ({formData.discountPercent ?? 0}%):</span>
+                  <span className="font-medium">
+                    -{formatCurrency((calculateSubtotal() * (formData.discountPercent ?? 0)) / 100, formData.currency)}
+                  </span>
+                </div>
+
+
 
                   <div className="mb-2">
                     {taxComponents.map((tax) => (
@@ -927,6 +929,8 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                         <span>{formatCurrency((calculateSubtotal() * tax.rate) / 100, formData.currency)}</span>
                       </div>
                     ))}
+
+                    
 
                     <div className="flex justify-between font-medium mt-1">
                       <span>Total Tax ({taxComponents.reduce((sum, t) => sum + t.rate, 0)}%):</span>
@@ -974,20 +978,27 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                     
                     <button
                       onClick={() => handleDownloadPDF(selectedInvoice.id)}
-                      className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors flex items-center gap-2"
+                      className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors flex items-center gap-2 shadow-sm active:scale-95 cursor-pointer"
                     >
                       <Download size={16} />
                       Download PDF
                     </button>
                     
                     {/* Send via Email */}
-                    <button
-                      onClick={() => handleSendInvoiceEmail(selectedInvoice.id)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 shadow-sm"
-                    >
+                    <button  
+                        onClick={() => handleSendInvoiceEmail(selectedInvoice.id)}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 shadow-sm active:scale-95 cursor-pointer"
+                      >
                       <Send size={16} />
                       Send via Email
                     </button>
+                    {/* Success modal */}
+                      <SuccessModal
+                        show={showSuccess}
+                        onClose={() => setShowSuccess(false)}
+                        message="Invoice email sent successfully!"
+                      />
+
                     <button
                       onClick={() => setSelectedInvoice(null)}
                       className="text-gray-500 hover:text-gray-700"
@@ -1014,7 +1025,7 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Due Date:</span>
-                        <span className="font-medium">{formatDate(selectedInvoice.dueDate)}</span>
+                        <span  className="font-medium">{formatDate(selectedInvoice.dueDate)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Status:</span>
@@ -1035,6 +1046,11 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Amount Paid:</span>
                         <span className="font-medium">{formatCurrency(selectedInvoice.amountPaid, selectedInvoice.currency)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Amount:</span>
+                        <span className="font-medium">{formatCurrency(selectedInvoice.total, selectedInvoice.currency)}</span>
                       </div>
 
                     </div>
@@ -1063,21 +1079,75 @@ const handleSendInvoiceEmail = async (invoiceId) => {
                   </div>
                 </div>
 
+                
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Invoice Items</h3>
+                  <table className="w-full border border-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Item
+                        </th>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Description   
+                        </th>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Quantity
+                        </th> 
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Unit Price
+                        </th>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Total 
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedInvoice.items.map((item) => (  
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {item.name}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {item.description}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {formatCurrency(item.unitPrice, selectedInvoice.currency)}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {formatCurrency(item.unitPrice * item.quantity, selectedInvoice.currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+
                 <div className="mb-6 p-4 bg-gray-50 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-600">Subtotal:</span>
                     <span className="font-medium">{formatCurrency(selectedInvoice.subtotal, selectedInvoice.currency)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Discount ({selectedInvoice.discountPercent ?? 0}%):</span>
+                    <span className="font-medium">
+                      -{formatCurrency((selectedInvoice.subtotal * (selectedInvoice.discountPercent ?? 0)) / 100, selectedInvoice.currency)}
+                    </span>
                   </div>
                   <div className="mb-2">
   {selectedInvoice.taxComponents?.map((tax) => (
     <div key={tax.id} className="flex justify-between text-sm text-gray-600">
       <span>{tax.name} ({tax.rate}%):</span>
       <span>
-        {formatCurrency((selectedInvoice.subtotal * tax.rate) / 100, selectedInvoice.currency)}
+        {formatCurrency(((selectedInvoice.subtotal - (selectedInvoice.subtotal * (selectedInvoice.discountPercent ?? 0)) / 100) * tax.rate) / 100, selectedInvoice.currency)}
       </span>
     </div>
   ))}
-  
+
 
   <div className="flex justify-between font-medium mt-1">
     <span>

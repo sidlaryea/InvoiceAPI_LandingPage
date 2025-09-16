@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import {jwtDecode} from "jwt-decode";
+import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 
 
 export default function Login() {
@@ -43,6 +44,7 @@ export default function Login() {
         localStorage.setItem("countryCode",countryCode)
         localStorage.setItem("userId", userId);
         localStorage.setItem("email",email);
+        localStorage.setItem("token", token); // Store token for authenticated requests
         
         
         
@@ -83,6 +85,9 @@ export default function Login() {
     }
   };
 
+
+
+  useApiInterceptor(); // Initialize the API interceptor
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center">
       <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8" align="center">

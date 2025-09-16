@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { CreditCard, Check, X, Shield, Clock, Users, Zap } from 'lucide-react';
+import axios from 'axios';
 
 const UpgradePage = () => {
   // States for navbar functionality
@@ -27,7 +29,7 @@ const UpgradePage = () => {
   
   // Business information form
   const [businessInfo, setBusinessInfo] = useState({
-    companyName: '',
+    businessName: '',
     contactPerson: '',
     email: '',
     phone: '',
@@ -36,6 +38,30 @@ const UpgradePage = () => {
     country: '',
     taxId: ''
   });
+
+  useEffect(() => {
+
+    
+    const fetchBusinessInfo = async () => {
+const token = localStorage.getItem("jwtToken");
+    const apiKey = localStorage.getItem("apiKey");
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/BusinessInfo`,
+
+         {
+          headers: { Authorization: `Bearer ${token}` 
+          , "X-API-KEY": apiKey
+        },
+        
+        }
+      );
+        setBusinessInfo(response.data);
+      } catch (error) {
+        console.error('Error fetching business info:', error);
+      }
+    };
+    fetchBusinessInfo();
+  }, []);
 
   // Payment form
   const [paymentInfo, setPaymentInfo] = useState({
@@ -165,7 +191,7 @@ const UpgradePage = () => {
     setSelectedPlan(null);
     setPaymentStep('plan');
     setBusinessInfo({
-      companyName: '',
+      businessName: '',
       contactPerson: '',
       email: '',
       phone: '',
@@ -185,15 +211,34 @@ const UpgradePage = () => {
     });
   };
 
-  const handleBusinessInfoSubmit = () => {
-    setPaymentStep('payment');
-  };
+  // const handleBusinessInfoSubmit = () => {
+  //   setPaymentStep('payment');
+  // };
 
-  const handlePaymentSubmit = () => {
-    // Here you would integrate with your payment processor
-    alert(`Payment processing for ${selectedPlan.name} plan...`);
-    closePaymentModal();
-  };
+  const handlePaymentSubmit = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/Payment/initialize`,
+      {
+        email: businessInfo.email,
+        amount: selectedPlan.price * 100, // convert to smallest currency unit
+        callbackUrl: `${window.location.origin}/paymentverify`
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    if (res.data.authorizationUrl) {
+      window.location.href = res.data.authorizationUrl; // redirect user to Paystack
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Payment initialization failed.");
+  }
+};
 
   const formatCardNumber = (value) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
@@ -209,6 +254,9 @@ const UpgradePage = () => {
       return v;
     }
   };
+
+
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
@@ -227,7 +275,7 @@ const UpgradePage = () => {
           
           {/* Navigation Links */}
           <div className="hidden md:flex space-x-6 text-sm font-medium text-gray-700 transition-colors group ml-auto mr-4">
-            <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Dashboard</a>
+            <Link to="/dashboard" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Dashboard</Link>
             <a href="./invoicedashboard" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Generate Invoices</a>
             <a href="./UpgradePage" className="text-blue-600 hover:text-blue-600 transition-colors font-bold underline">Billing</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">API Documentation</a>
@@ -431,8 +479,8 @@ const UpgradePage = () => {
                   <input
                     type="text"
                     placeholder="Company Name *"
-                    value={businessInfo.companyName}
-                    onChange={(e) => setBusinessInfo({...businessInfo, companyName: e.target.value})}
+                    value={businessInfo.businessName}
+                    onChange={(e) => setBusinessInfo({...businessInfo, businessName: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <input
@@ -473,7 +521,7 @@ const UpgradePage = () => {
                   <input
                     type="text"
                     placeholder="Country"
-                    value={businessInfo.country}
+                    value={typeof businessInfo.country === 'object' && businessInfo.country !== null ? businessInfo.country.name : businessInfo.country}
                     onChange={(e) => setBusinessInfo({...businessInfo, country: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -486,8 +534,8 @@ const UpgradePage = () => {
                   />
                 </div>
                 <button
-                  onClick={handleBusinessInfoSubmit}
-                  disabled={!businessInfo.companyName || !businessInfo.contactPerson || !businessInfo.email || !businessInfo.phone}
+                  onClick={handlePaymentSubmit}
+                  disabled={!businessInfo.businessName || !businessInfo.contactPerson || !businessInfo.email || !businessInfo.phone}
                   className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                 >
                   Continue to Payment

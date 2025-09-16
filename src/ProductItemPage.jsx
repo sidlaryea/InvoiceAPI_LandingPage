@@ -12,6 +12,7 @@ import AddUnitModal from "./components/AddUnitModal";
 import AddTagModal from "./components/AddTagModel";
 import AddUpcModal from "./components/AddUPCModal";
 import Pagination from "./components/Ui/pagination";
+import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 
 export default function InventoryManagementPage() {
   const [search, setSearch] = useState('');
@@ -556,6 +557,9 @@ const handleSubmit = (e) => {
       )
     );
   }, [search, products]);
+
+
+useApiInterceptor(); // Initialize the API interceptor
 
   return (
     <DashboardLayout

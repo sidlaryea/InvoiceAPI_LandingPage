@@ -1,9 +1,12 @@
-import { useState, useEffect,React } from "react";
+import { useState, useEffect, React } from "react";
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
 import { jwtDecode } from "jwt-decode";
 import { PaystackButton } from "react-paystack";
 import { ensurePaystack } from "./Utils/ensurePaystack";
+import ReceiptViewer from "./components/Ui/ReceiptViewer";
+import { formatNumber } from "./Utils/formatNumber";
+import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 
 
 
@@ -15,11 +18,35 @@ export default function PaymentPage() {
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState(selectedInvoice?.total || 0);
+  const [transactions, setTransactions] = useState([]);
+  const [balanceRemaining, setBalanceRemaining] = useState(0);
   
-
-  const [reference, setReference] = useState("");
-const [transactionId, setTransactionId] = useState("");
+  const [unpaidInvoices, setUnpaidInvoices] = useState(0);
+  const [totalPayments, setTotalPayments] = useState(0);
+  const [expectedTotal, setExpectedTotal] = useState(0);
+  const [transactionId, setTransactionId] = useState("");
+  //const [partiallyPaidAmount,setPartiallyPaidAmount] = useState(0);
 const [userProfile, setUserProfile] = useState(null);
+const [selectedTxnId, setSelectedTxnId] = useState(null);
+  const [reference, setReference] = useState("");
+
+  // Logic to calculate KPIs
+  useEffect(() => {
+    if (invoices.length > 0) {
+     // setTotalInvoices(invoices.length);
+      setUnpaidInvoices(invoices.filter(inv => inv.status === "Draft").length + invoices.filter(inv => inv.status === "PartiallyPaid").length);
+      //setPartiallyPaidAmount(invoices.filter(inv => inv.status === "PartiallyPaid").reduce((acc, inv) => acc + inv.amountPaid, 0));
+      setBalanceRemaining(invoices.reduce((acc, inv) => acc + inv.balanceDue, 0));
+      setExpectedTotal(invoices.reduce((acc, inv) => acc + Math.round((inv.total || 0) * 100) / 100, 0));
+    }
+  }, [invoices]);
+
+  useEffect(() => {
+    if (transactions.length > 0) {
+      setTotalPayments(transactions.reduce((acc, txn) => acc + (txn.amountPaid || 0), 0));
+    }
+  }, [transactions]);
  
   const [isChangeImageDialogOpen, setIsChangeImageDialogOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -127,14 +154,17 @@ if (!token) {
   
 
 
-  useEffect(() => {
- const fetchInvoices = async () => {
+const fetchInvoices = async () => {
+  
+    console.log("Fetching invoices..."); // Debug log
     try {
       const apiKey = localStorage.getItem("apiKey"); // Include this if your API requires auth
+      const token = localStorage.getItem("jwtToken");
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Invoice`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Invoice/GetInvoicesByUserId`, {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
           "X-Api-Key": apiKey, // Add this if required by your backend
         },
       });
@@ -151,8 +181,10 @@ if (!token) {
     }
   };
 
+  useEffect(() => {
     fetchInvoices();
     fetchUserProfile();
+    fetchTransactions();
   }, []);
 
   useEffect(() => {
@@ -161,6 +193,11 @@ if (!token) {
     } else {
       setFilteredInvoices(
         invoices.filter((inv) =>
+        (
+        inv.status === "Draft" ||
+        inv.status === "Sent" ||
+        inv.status === "PartiallyPaid") &&  
+
           inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
@@ -182,8 +219,11 @@ if (!token) {
     { name: "MasterCard", logo: "./logos/mastercard.png" },
     { name: "MTN Mobile Money", logo: "./logos/mtn.png" },
     { name: "AirtelTigo", logo: "./logos/tigo.jpg" },
-    { name: "Vodafone Cash", logo: "./logos/telecel.png" },
+    { name: "Telecel Cash", logo: "./logos/telecel.png" },
     {name:"Paystack", logo:"./logos/paystack_logo.png"},
+    {name:"Cash", logo:"./logos/cash.png"},
+    {name:"Wire Transfer", logo:"./logos/wire transfer.png"},
+
   ];
 
   
@@ -233,7 +273,14 @@ const handlePay = async () => {
 
       // 2. Prepare Paystack details
       const reference = `INV-${selectedInvoice.id}-${Date.now()}`;
-      const amountInPesewas = Math.round(selectedInvoice.total * 100);
+      //const amountInPesewas = Math.round(selectedInvoice.total * 100);
+
+      let amountToUse = Number(paymentAmount);
+        if (!amountToUse || amountToUse <= 0) {
+          amountToUse = Math.round(selectedInvoice.total);
+        }
+        const amountInPesewas = Math.round(amountToUse * 100);
+
       
 
        // 3) Ensure SDK is present
@@ -244,7 +291,7 @@ const handlePay = async () => {
       // ✅ Correct
 const handler = window.PaystackPop.setup({
   key: setup.paystackPublicKey,
-  email: "sidneylaryea@yahoo.com",
+email: selectedInvoice.customer?.email,
   amount: amountInPesewas,
   currency: setup.paystackCurrency || "GHS",
   reference,
@@ -275,6 +322,9 @@ const handler = window.PaystackPop.setup({
               setSuccess("Payment successfully recorded.");
               setSelectedInvoice(null);
               setSelectedMethod(null);
+              setSearchTerm(""); // Reset search field
+              fetchInvoices(); // Refresh the invoices list
+              fetchTransactions();
             } else {
               alert("❌ Could not verify Paystack payment");
             }
@@ -298,10 +348,10 @@ const handler = window.PaystackPop.setup({
     const paymentData = {
       invoiceId: selectedInvoice.id,
       transactionId: transactionId || `TXN-${Date.now()}`,
-      amount: selectedInvoice.total,
+      amount: paymentAmount && paymentAmount > 0 ? Number(paymentAmount) :selectedInvoice.total,
       paymentMethod: selectedMethod,
       paymentDate: new Date().toISOString(),
-      reference: reference || autoGeneratedRef,
+      reference:  selectedMethod === "Paystack" || selectedMethod === "Cash" ? reference || autoGeneratedRef :(reference && reference.trim() !== "" ?reference:null ),
       createdBy,
     };
 
@@ -325,6 +375,9 @@ const handler = window.PaystackPop.setup({
     setTransactionId("");
     setSelectedInvoice(null);
     setSelectedMethod(null);
+    setSearchTerm(""); // Reset search field
+    fetchInvoices(); // Refresh the invoices list
+    fetchTransactions();
   } catch (err) {
     console.error("Payment error:", err);
     setError("Something went wrong while processing payment ❌");
@@ -333,8 +386,53 @@ const handler = window.PaystackPop.setup({
   }
 };
 
+const fetchTransactions = async () => {
+  const token = localStorage.getItem("jwtToken");
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/Payment/last?limit=30`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Fetch response status:", response.status);
+
+    if (!response.ok) {
+      throw new Error("❌ Failed to fetch last transactions");
+    }
+
+    // Parse JSON response
+    const data = await response.json();
+    console.log("✅ Transactions loaded:", data);
+    console.log("Transaction data structure:", JSON.stringify(data, null, 2)); // Log the structure
+    
+
+    // Return transactions to be used by caller
+    setTransactions(data);
+  } catch (error) {
+    console.error("⚠️ Error fetching transactions:", error);
+    return [];
+  }
+};
   
-  
+
+
+
+  // Email receipt function
+  const handleEmailReceipt = (txnId) => {
+    const txn = transactions.find(t => t.id === txnId);
+    if (!txn) return;
+
+    // In production: call backend endpoint to send email
+    alert(`Emailing receipt for Transaction #${txnId}`);
+  };
   
   
   const handleSignOut = () => {
@@ -342,7 +440,7 @@ const handler = window.PaystackPop.setup({
     window.location.replace("/InvoiceAPI_LandingPage/login");
   };
 
-
+useApiInterceptor(); // Initialize the API interceptor
 
 
 
@@ -389,21 +487,23 @@ const handler = window.PaystackPop.setup({
    </div>
         {/* KPI Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-sm text-gray-500">Today's Payments</p>
-            <h2 className="text-xl font-semibold text-teal-700">GHS 1,250.00</h2>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-sm text-gray-500">Total Invoices</p>
-            <h2 className="text-xl font-semibold text-teal-700">24</h2>
-          </div>
+          
+          
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Unpaid Invoices</p>
-            <h2 className="text-xl font-semibold text-red-600">6</h2>
+            <h2 className="text-xl font-semibold text-red-600">{unpaidInvoices}</h2>
           </div>
           <div className="bg-white p-4 rounded shadow">
-            <p className="text-sm text-gray-500">Total Revenue</p>
-            <h2 className="text-xl font-semibold text-green-600">GHS 18,750.00</h2>
+            <p className="text-sm text-gray-500">Remaining Balance</p>
+            <h2 className="text-xl font-semibold text-teal-700">GHS {formatNumber(balanceRemaining)}</h2>
+          </div>
+          <div className="bg-white p-4 rounded shadow">
+            <p className="text-sm text-gray-500">Total Payments</p>
+            <h2 className="text-xl font-semibold text-teal-700">GHS {formatNumber(totalPayments)}</h2>
+          </div>
+          <div className="bg-white p-4 rounded shadow">
+            <p className="text-sm text-gray-500">Expected Total </p>
+            <h2 className="text-xl font-semibold text-green-600">GHS {formatNumber(expectedTotal)}</h2>
           </div>
         </div>
 
@@ -437,7 +537,7 @@ const handler = window.PaystackPop.setup({
                 setFilteredInvoices([]); // hide dropdown
               }}
             >
-              {invoice.invoiceNumber} – GHS {invoice.total?.toFixed(2)}
+              {invoice.invoiceNumber} – GHS {formatNumber(invoice.balanceDue)}
             </li>
           ))}
         </ul>
@@ -450,7 +550,9 @@ const handler = window.PaystackPop.setup({
               <div className="text-sm text-gray-700">
                 <p><strong>Customer Name:</strong> {selectedInvoice.customer.fullName}</p>
           <p><strong>Invoice Issue Date:</strong> {new Date(selectedInvoice.createdAt).toLocaleDateString()}</p>
-          <p><strong>Total Amount:</strong> GHS{selectedInvoice.total.toFixed(2)}</p>
+          <p><strong>Balance Due:</strong> GHS {formatNumber(selectedInvoice.balanceDue)}</p>
+          <p><strong>Paid Amount:</strong> GHS {formatNumber(selectedInvoice.amountPaid)}</p>
+
 
           
              
@@ -482,7 +584,7 @@ const handler = window.PaystackPop.setup({
           {/* Right Activity Pane */}
           <div className="bg-white rounded shadow p-6 space-y-4 lg:col-span-1">
             <h2 className="text-lg font-bold text-gray-800 mb-2">Payment Summary</h2>
-            {["BankTransfer", "MobileMoney", "POS"].includes(selectedMethod) && (
+            {["BankTransfer", "MobileMoney", "POS"].includes(selectedMethod) && ( 
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">Payment Reference</label>
     <input
@@ -496,31 +598,64 @@ const handler = window.PaystackPop.setup({
 )}
             {selectedInvoice && selectedMethod ? (
                     <>
-                      <p className="text-sm text-gray-700">
-                        You're paying <strong>GHS {selectedInvoice.total.toFixed(2)}</strong> via{" "}
-                        <strong>{selectedMethod}</strong>
-                      </p>
+                        <p className="text-sm text-gray-700 mb-3">
+                          You're paying <strong>GHS {formatNumber(paymentAmount && Number(paymentAmount) > 0 ? paymentAmount : selectedInvoice.balanceDue)}</strong> via{" "}
+                          <strong>{selectedMethod}</strong>
+                        </p>
 
-                      <button
-                        onClick={handlePay}
-                        disabled={!selectedMethod}
-                        className={`px-4 py-2 rounded-md text-white ${
-                          selectedMethod === "Paystack"
-                            ? "bg-green-600 hover:bg-green-700"
-                            : "bg-indigo-600 hover:bg-indigo-700"
-                        } disabled:opacity-50`}
-                      >
-                        {loading
-                        ? "Processing..."
-                        :selectedMethod === "Paystack"
-                          ? "Proceed to Paystack Checkout"
-                          : `Record ${selectedMethod} Payment`}
-                          
-                      </button>
+                        {/* Partial Payment Input */}
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Payment Amount (GHS)
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={selectedInvoice.balanceDue}
+                            value={paymentAmount}
+                            onChange={(e) => setPaymentAmount(e.target.value)}
+                            className="w-full p-2 border rounded mt-1"
+                            placeholder={`Max: GHS ${selectedInvoice.balanceDue.toFixed(2)}`}
+                          />
+                        </div>
 
-                      {success && <p className="text-green-600 text-sm mt-2">{success}</p>}
-                      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-                    </>
+                        {/* Reference Input (only for non-cash / non-paystack) */}
+                        {selectedMethod !== "Paystack" && selectedMethod !== "Cash" && (
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700">
+                              Reference / Transaction ID
+                            </label>
+                            <input
+                              type="text"
+                              value={reference}
+                              onChange={(e) => setReference(e.target.value)}
+                              className="w-full p-2 border rounded mt-1"
+                              placeholder="Enter transaction reference"
+                            />
+                          </div>
+                        )}
+
+                        {/* Pay Button */}
+                        <button
+                          onClick={handlePay}
+                          disabled={!selectedMethod}
+                          className={`px-4 py-2 rounded-md text-white ${
+                            selectedMethod === "Paystack"
+                              ? "bg-green-600 hover:bg-green-700"
+                              : "bg-indigo-600 hover:bg-indigo-700"
+                          } disabled:opacity-50`}
+                        >
+                          {loading
+                            ? "Processing..."
+                            : selectedMethod === "Paystack"
+                            ? "Proceed to Paystack Checkout"
+                            : `Record ${selectedMethod} Payment`}
+                        </button>
+
+                        {/* Feedback */}
+                        {success && <p className="text-green-600 text-sm mt-2">{success}</p>}
+                        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+                      </>
                   ) : (
                     <p className="text-gray-500 text-sm">
                       Select an invoice and a payment method to proceed.
@@ -532,30 +667,70 @@ const handler = window.PaystackPop.setup({
 
 
        {/* Last Transactions */}
-  <div className="bg-white p-4 rounded shadow">
-    <div className="flex justify-between items-center">
-      <h2 className="text-lg font-semibold">Last Transactions</h2>
-      <button className="text-teal-500 text-sm">SEE MORE</button>
-    </div>
-    <ul className="mt-4 divide-y divide-gray-200">
-      {Array(7).fill().map((_, i) => (
-        <li key={i} className="py-2 flex justify-between items-center text-sm">
-          <div>
-            <p className="font-medium text-gray-700">+233 24 651 2641</p>
-            <p className="text-gray-500">Harman Kardon, Samsung Galaxy A70...</p>
-          </div>
-          <span className="font-semibold text-gray-800">GHS 76.25</span>
-        </li>
-      ))}
-    </ul>
+<div className="bg-white p-4 rounded shadow">
+  <div className="flex justify-between items-center">
+    <h2 className="text-lg font-semibold">Last Transactions</h2>
+     
+    
   </div>
-      </div>
 
-            
+<ul className="mt-4 divide-y divide-gray-200">
+  {transactions && transactions.length > 0
+    ? transactions.map((txn) => (
+        <li key={txn.id} className="flex justify-between items-start py-3">
+          {/* Left side */}
+          <div>
+            <p className="font-medium text-gray-700">
+              {txn.customer?.fullName || "Unknown Customer"} (
+              {txn.customer?.phone || "No phone"})
+            </p>
+            <p className="text-gray-500 truncate max-w-[250px]">
+              {txn.items?.map((it) => it.name).join(", ") || "No items"}
+            </p>
+            <p className="text-xs text-gray-400">
+              Payment Method: {txn.lastPayment?.paymentMethod || "N/A"}
+            </p>
+          </div>
 
+          {/* Right side */}
+          <div className="text-right">
+            <span className="font-semibold text-gray-800 block">
+              GHS {formatNumber(txn.amountPaid || 0)}
+            </span>
+            <div className="flex gap-2 justify-end mt-1">
+              <button
+                onClick={() => setSelectedTxnId(txn.id)}
+                className="text-xs text-blue-500 hover:underline"
+              >
+                View Receipt
+              </button>
+              <button
+                onClick={() => handleEmailReceipt(txn.id)}
+                className="text-xs text-green-500 hover:underline"
+              >
+                Email Receipt
+              </button>
+            </div>
+          </div>
+        </li>
+      ))
+    : (
+      <li className="py-3 text-gray-500 text-sm">No transactions found</li>
+    )
+  }
+</ul>
+</div>
+{/* Show modal if a transaction is selected */}
+      {selectedTxnId && (
+        <ReceiptViewer
+          txnId={selectedTxnId}
+          onClose={() => setSelectedTxnId(null)}
+        />
+      )}
+
+      
+    </div>
     </DashboardLayout>
-
     
   );
 }
-

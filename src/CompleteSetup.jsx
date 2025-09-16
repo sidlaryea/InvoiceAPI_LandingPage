@@ -11,6 +11,7 @@ export default function CompleteSetup() {
     businessName: '',
     address: '',
     taxId: '',
+    logo:'',
     email: '',
     countryId: '',
     phone: '',
@@ -111,10 +112,12 @@ export default function CompleteSetup() {
         }
       );
 
+      console.log("Upload Logo Response:", uploadLogoResponse.data);
       logoFilePath = uploadLogoResponse.data.logoFilePath || ""; // adjust if backend returns differently
+      console.log("Logo File Path:", logoFilePath);
     }
-console.log("Industry ID raw:", form.industryId);
-    // 2. Submit Business Info
+      console.log("Industry ID raw:", form.industryId);
+      // 2. Submit Business Info
     const businessInfoPayload = {
       businessName: form.businessName,
       industryId: parseInt(form.industryId) || null,
@@ -126,6 +129,8 @@ console.log("Industry ID raw:", form.industryId);
       logoFilePath,
       userId
     };
+
+    
 
     await axios.post("http://localhost:5214/api/BusinessInfo", businessInfoPayload, {
       headers: { Authorization: `Bearer ${token}` }
@@ -152,12 +157,12 @@ console.log("Industry ID raw:", form.industryId);
         id: 0,
         userId,
         enablePaystack: true,
-        paystackPublicKey: form.paystackPublicKey,
-        paystackSecretKey: form.paystackSecretKey,
-        paystackCurrency: form.paystackCurrency || "GHS",
-        bankAccountNumber: form.bankAccountNumber,
+        paystackPublicKey: form.payStackPublicKey,
+        paystackSecretKey: form.payStackSecretkey,
+        paystackCurrency: form.paySatckCurrency || "GHS",
+        bankAccountNumber: form.accountNumber,
         bankName: form.bankName,
-        accountName: form.accountName || "",
+        accountName: form.accountHolderName || "",
         allowPartialPayments: form.allowPartialPayments || false,
         acceptOfflinePayments: form.acceptOfflinePayments || false,
         createdAt: new Date().toISOString(),
@@ -309,7 +314,7 @@ console.log("Industry ID raw:", form.industryId);
               <input
                 type="file"
                 name="logo"
-                
+                accept="image/*"
                 className="input bg-white border border-gray-300 rounded-lg px-4 py-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 onChange={handleFileChange}
               />

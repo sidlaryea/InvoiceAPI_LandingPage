@@ -3,6 +3,8 @@ import React from "react";
 import Sidebar from "./Sidebar";
 import TopNavbar from "./TopNavbar";
 import AccountDialogs from "./AccountDialogs";
+import useAuthCheck from "./Hooks/useAuthCheck";
+import {useApiInterceptor}  from "./Hooks/useApiInterceptor";
 
 export default function DashboardLayout({
   children,
@@ -17,6 +19,11 @@ export default function DashboardLayout({
   userProfile
 
 }) {
+  
+   useAuthCheck();
+    useApiInterceptor();
+  
+  
   return (
     <div className="h-screen overflow-hidden">
       {/* Top Navbar */}

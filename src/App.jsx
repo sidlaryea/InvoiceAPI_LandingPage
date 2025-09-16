@@ -13,31 +13,41 @@ import PaymentPage from './PaymentPage';
 import CompleteSetup from './CompleteSetup'; // New complete setup page
 import ProductItemPage from './ProductItemPage'; // New inventory management page
 import UpgradePage from './UpgradePage';
+import PaymentVerify from './components/PaymentVerify';
+import ExpensePage from './Expense';
+
+
 
 
 function App() {
-  return (
-    <Router basename="/InvoiceAPI_LandingPage">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/registration" element={<Register />} />
-        <Route path="/login" element={<Login />} /> 
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/invoicedashboard" element={<InvoiceDashboardPage />} /> {/* Redirect to Dashboard for /invoicedashboard */}
-        <Route path="/create-invoice" element={<CreateInvoice />} /> {/* Redirect all other paths to Home */}
-        <Route path="/DashboardLayout" element={<DashboardLayout />} />
-        <Route path="/customer" element={<CustomerRegistrationForm />} /> {/* Redirect all other paths to Home */}
-        <Route path="/invoices" element={<GenerateInvoicePage />} /> {/* Redirect to Create Invoice*/}
-        <Route path="/payment" element={<PaymentPage/>}/>
-        <Route path="/complete-setup" element={<CompleteSetup/>} /> {/* Redirect all other paths to Home */}
-        <Route path="/ProductItemPage" element={<ProductItemPage />} /> {/* New inventory management page */}
-        <Route path="/UpgradePage" element={<UpgradePage />} /> {/* New inventory management page */}
-        
-        
+  
+  
 
+  return (
+    
+      <Router basename="/InvoiceAPI_LandingPage">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/registration" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/invoicedashboard" element={<InvoiceDashboardPage />} /> {/* Redirect to Dashboard for /invoicedashboard */}
+          <Route path="/create-invoice" element={<CreateInvoice />} /> {/* Redirect all other paths to Home */}
+          <Route path="/DashboardLayout" element={<DashboardLayout />} />
+          <Route path="/customer" element={<CustomerRegistrationForm />} /> {/* Redirect all other paths to Home */}
+          <Route path="/invoices" element={<GenerateInvoicePage />} /> {/* Redirect to Create Invoice*/}
+          <Route path="/payment" element={<PaymentPage/>}/>
+          <Route path="/complete-setup" element={<CompleteSetup/>} /> {/* Redirect all other paths to Home */}
+          <Route path="/ProductItemPage" element={<ProductItemPage />} /> {/* New inventory management page */}
+          <Route path="/UpgradePage" element={<UpgradePage />} /> {/* New inventory management page */}
+          <Route path="/paymentverify" element={<PaymentVerify  />} /> {/* Redirect all other paths to Home */}
+          <Route path="/expense" element={<ExpensePage  />} /> {/* Redirect all other paths to Home */}
+          
+        </Routes>
         
-      </Routes>
-    </Router>
+      </Router>
+      
+    
   );
 }
 

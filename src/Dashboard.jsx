@@ -6,6 +6,10 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { TextField } from '@mui/material';
+import UserProfileForm from './components/UserProfileForm';
+// import { Calendar } from "lucide-react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -16,8 +20,10 @@ export default function Dashboard() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isChangeUserProfileOpen, setIsChangeUserProfileOpen] = useState(false);
+  const [activities, setActivities] = useState([]);
   
-  
+  dayjs.extend(relativeTime);
   
   
   // const [refresh, setRefresh] = useState(false);
@@ -61,6 +67,10 @@ const profileImageUrl = userProfile.profilePic
 const openModal = () => {
   setIsModalOpen(true);
 };
+
+const openChangeUserProfileDialog = () => {
+  setIsChangeUserProfileOpen(true);
+}
 
 const closeModal = () => {
   setIsModalOpen(false);
@@ -259,7 +269,37 @@ const closeChangePasswordDialog = () => {
       }
     };
 
+    useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const apiKey = localStorage.getItem("api");
+
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/audit/recent`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              "X-Api-Key": apiKey,
+            },
+          }
+        );
+
+        setActivities(res.data || []);
+      } catch (error) {
+        console.error("Error fetching recent activities:", error);
+      }
+    };
+
+    fetchActivities();
+  }, []);
+
   useEffect(() => {fetchUserProfile();}, []);
+
+
+
+
 
   // Display loading state
   if (loading) {
@@ -336,7 +376,7 @@ const closeChangePasswordDialog = () => {
               
               <li><a href="#/" onClick={openChangeImageDialog}>Change Profile Image</a></li>
               <li><a href="#/" onClick={openChangePasswordDialog}>Change Password</a></li>
-              <li><a href="#/">Change User Profile Information</a></li>
+              <li><a href="#/" onClick={openChangeUserProfileDialog}>Change User Profile Information</a></li>
               <li><a href="/ManageUsers">Manage Users</a></li>
             </ul>
           </DialogContent>
@@ -389,6 +429,19 @@ const closeChangePasswordDialog = () => {
             <Button onClick={handleChangePassword} color="primary">Change Password</Button>
             <Button onClick={closeChangePasswordDialog} color="secondary">Cancel</Button>
           </DialogActions>
+        </Dialog>
+
+        <Dialog open={isChangeUserProfileOpen} onClose={() => setIsChangeUserProfileOpen(false)}>
+
+          
+          <DialogContent> 
+          <UserProfileForm 
+              userProfile={userProfile} 
+              onClose={() => setIsChangeUserProfileOpen(false)} 
+              onProfileUpdated={fetchUserProfile} 
+            />
+
+          </DialogContent>
         </Dialog>
 
       </header>
@@ -508,27 +561,44 @@ const closeChangePasswordDialog = () => {
                 </p>
               </div>
 
-              <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-white/20">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Recent Activity
-                </h2>
-                <div className="space-y-4">
-                  {[{ time: '2 hours ago', action: 'API call to /users endpoint', status: 'success' },
-                    { time: '5 hours ago', action: 'API call to /data endpoint', status: 'success' },
-                    { time: '1 day ago', action: 'API key regenerated', status: 'info' },
-                    { time: '2 days ago', action: 'Account created', status: 'info' }
-                  ].map((activity, index) => (
-                    <div key={index} className="flex items-center py-3 border-b border-gray-100 last:border-b-0">
-                      <div className={`w-2 h-2 rounded-full mr-3 ${activity.status === 'success' ? 'bg-green-500' : 'bg-blue-500'}`}></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+             <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-white/20">
+  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+    <Calendar className="w-5 h-5 mr-2" />
+    Recent Activity
+  </h2>
+
+  <div className="space-y-4">
+    {activities.length === 0 ? (
+      <p className="text-sm text-gray-500">No recent activity found.</p>
+    ) : (
+      activities.map((activity, index) => (
+        <div
+          key={index}
+          className="flex items-center py-3 border-b border-gray-100 last:border-b-0"
+        >
+          <div
+            className={`w-2 h-2 rounded-full mr-3 ${
+              activity.action?.toLowerCase() === "update"
+                ? "bg-green-500"
+                : activity.action?.toLowerCase() === "delete"
+                ? "bg-red-500"
+                : "bg-blue-500"
+            }`}
+          ></div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">
+              {activity.action} on {activity.tableName}
+            </p>
+            <p className="text-xs text-gray-500">
+              {dayjs(activity.activityDate).fromNow()} •{" "}
+              {activity.userName || "Unknown User"}
+            </p>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</div>
             </div>
 
             {/* Upgrade & Quick Actions */}
