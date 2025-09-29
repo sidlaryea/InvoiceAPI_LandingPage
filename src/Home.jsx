@@ -26,15 +26,25 @@ function Home() {
   // };
 
   const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setTimeout(() => {
-        setSubscribed(false);
-        setEmail('');
-      }, 3000);
-    }
-  };
+  e.preventDefault();
+  
+  emailjs.send(
+    "service_kccdj9v",      // from EmailJS dashboard
+    "template_79sy0pb",     // email template
+    { user_email: email },  // data passed into template
+    "EsGLckjpuscVtZp4W"          // public key from EmailJS
+  )
+  .then(() => {
+    alert("Subscription info sent!");
+    setSubscribed(true);
+    setEmail("");
+  })
+  .catch((err) => {
+    console.error("Error:", err);
+    alert("Something went wrong. Please try again.");
+  });
+};
+
 
   const scrollToSection = (sectionId) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
@@ -177,7 +187,7 @@ function Home() {
             <video
               src="Demo.mp4"
               controls
-              poster="preview.png"
+              poster="./public/Onboard.gif"
               className="w-full rounded-xl border border-gray-200"
             >
               Your browser does not support the video tag.
@@ -473,11 +483,11 @@ function Home() {
               <span className="text-xl font-bold">InvoiceAPI by SidConsult</span>
             </div>
             <p className="text-gray-400 mb-6">&copy; 2025 InvoiceAPI. Powered By Sidconsult. All rights reserved.</p>
-            <div className="flex justify-center space-x-8 text-sm">
+            {/* <div className="flex justify-center space-x-8 text-sm">
               <button className="hover:text-blue-400 transition-colors">Privacy Policy</button>
               <button className="hover:text-blue-400 transition-colors">Terms of Service</button>
               <button className="hover:text-blue-400 transition-colors">Contact</button>
-            </div>
+            </div> */}
           </div>
         </div>
       </footer>
