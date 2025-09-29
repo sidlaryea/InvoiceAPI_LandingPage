@@ -15,6 +15,9 @@ import ProductItemPage from './ProductItemPage'; // New inventory management pag
 import UpgradePage from './UpgradePage';
 import PaymentVerify from './components/PaymentVerify';
 import ExpensePage from './Expense';
+import RecurringInvoicePage from './RecurringInvoice';
+import TrackDelivery from './Trackdelivery';
+import SettingsPage from './SettingsPage';
 
 
 
@@ -42,6 +45,9 @@ function App() {
           <Route path="/UpgradePage" element={<UpgradePage />} /> {/* New inventory management page */}
           <Route path="/paymentverify" element={<PaymentVerify  />} /> {/* Redirect all other paths to Home */}
           <Route path="/expense" element={<ExpensePage  />} /> {/* Redirect all other paths to Home */}
+          <Route path="/recurringInvoice" element={<RecurringInvoicePage  />} /> {/* Redirect all other paths to Home */}
+          <Route path="/trackDelivery" element={<TrackDelivery />} /> 
+          <Route path="/Settings" element={<SettingsPage />} /> {/* Redirect all other paths to Home */}
           
         </Routes>
         

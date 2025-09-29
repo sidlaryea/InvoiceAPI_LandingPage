@@ -14,6 +14,7 @@ export default function CompleteSetup() {
     logo:'',
     email: '',
     countryId: '',
+    IndustryId: '',
     phone: '',
     industryId: '',
     defaultInvoicePrefix: '',
@@ -372,7 +373,7 @@ export default function CompleteSetup() {
                 </div>
               )}
               <div className="text-center pt-4">
-                <button onClick={nextTab} className="text-blue-600 underline text-sm">Skip for now → Configure later in dashboard</button>
+                <button onClick={() => navigate("/login")} className="text-blue-600 underline text-sm">Skip for now → Configure later in dashboard</button>
               </div>
             </div>
           )}

@@ -2,6 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import React, { useState,  } from 'react';
 import { Briefcase, Layers, Store, Play, Check, X, Menu, ChevronDown } from "lucide-react";
 import DemoPoster from '/DemoPoster.png';
+import {Link} from 'react-router-dom';
+import emailjs from '@emailjs/browser';
+import toast from 'react-hot-toast';
 
 
 function Home() {
@@ -37,13 +40,37 @@ function Home() {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
     setMobileMenuOpen(false);
   };
+
+  const downloadAPIDocs = () => {
+    const link = document.createElement('a');
+    link.href = './InvoiceAPI_Developer_Onboarding_Guide.pdf';
+    link.download = 'InvoiceAPI_Developer_Onboarding_Guide.pdf';
+    link.click();
+  };
   const navigate = useNavigate();
+
+  const sendEmail = async () => {
+    try {
+      await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        {
+          subject: 'Enterprise Add-on Access Request',
+          message: 'A user has requested access to the Enterprise Add-on.',
+        },
+        'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
+      );
+      toast.success('Email sent successfully!');
+    } catch {
+      toast.error('Failed to send email. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Enhanced Navbar */}
       <header className="bg-white/95 backdrop-blur-sm shadow-lg fixed w-full z-50 transition-all duration-300">
-        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="absolute left-0 top-0 h-full flex items-center px-4">
           <div className="flex items-center space-x-3 group">
             <div className="relative">
               <img src="./logo.png" alt="InvoiceAPI Logo" className="h-9 w-9 transition-transform group-hover:scale-110" />
@@ -53,28 +80,34 @@ function Home() {
               InvoiceAPI by SidConsult
             </span>
           </div>
-          
+        </div>
+        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+
           {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-8 text-sm text-gray-700">
-            <button onClick={() => scrollToSection('demo')} className="hover:text-blue-600 transition-colors relative group">
+          <div className="hidden md:flex ml-auto space-x-8 text-sm text-gray-700">
+            <button onClick={() => scrollToSection('demo')} className="hover:text-blue-600 transition-colors relative group cursor-pointer">
               Demo
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300 cursor-pointer"></span>
             </button>
-            <button onClick={() => scrollToSection('pricing')} className="hover:text-blue-600 transition-colors relative group">
+            <button onClick={() => scrollToSection('pricing')} className="hover:text-blue-600 transition-colors relative group cursor-pointer">
               Pricing
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300 cursor-pointer"></span>
             </button>
-            <button onClick={() => scrollToSection('docs')} className="hover:text-blue-600 transition-colors relative group">
+            <button onClick={() => scrollToSection('docs')} className="hover:text-blue-600 transition-colors relative group cursor-pointer">
               Docs
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300 cursor-pointer"></span>
             </button>
-            <button className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+            <button onClick={downloadAPIDocs} className="hover:text-blue-600 transition-colors relative group cursor-pointer">
+              API Documentation
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300 cursor-pointer"></span>
+            </button>
+            <button className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg cursor-pointer">
               Sign Up
             </button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
@@ -84,7 +117,7 @@ function Home() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t shadow-lg">
+          <div className="md:hidden bg-white border-t shadow-lg ">
             <div className="px-4 py-2 space-y-2">
               <button onClick={() => scrollToSection('demo')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 rounded">Demo</button>
               <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 rounded">Pricing</button>
@@ -106,11 +139,11 @@ function Home() {
         
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in-up">
-            Generate Invoices via API
-            <span className="block text-4xl md:text-5xl text-blue-200 mt-2">in Seconds</span>
+            Invoice and Payment Management + API Access 
+            <span className="block text-4xl md:text-5xl text-blue-200 mt-2">In Seconds</span>
           </h1>
           <p className="mb-10 text-xl md:text-2xl text-blue-100 animate-fade-in-up animation-delay-500">
-            Fast, reliable, and developer-friendly invoice generation.
+            Fast, reliable, and user-friendly invoice generation software with powerful API integration.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-1000">
             
@@ -144,7 +177,7 @@ function Home() {
             <video
               src="Demo.mp4"
               controls
-              poster="DemoPoster.png"
+              poster="preview.png"
               className="w-full rounded-xl border border-gray-200"
             >
               Your browser does not support the video tag.
@@ -227,15 +260,15 @@ function Home() {
               <p className="text-gray-600 mb-6 text-center">Perfect for freelancers just getting started</p>
               <div className="mb-6">
                 <p className="text-5xl font-bold text-blue-600 mb-2">$0</p>
-                <p className="text-gray-500">Forever free</p>
+                <p className="text-gray-500">Trial Package</p>
               </div>
               <ul className="text-gray-600 mb-8 space-y-3 flex-grow">
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Up to 20 invoices/month</li>
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Email support</li>
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Export as PDF</li>
               </ul>
-              <button className="w-full bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition-all duration-300 transform group-hover:scale-105 font-semibold">
-                Get Started
+              <button  onClick={() => navigate('/Registration')} className="w-full bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition-all duration-300 transform group-hover:scale-105 font-semibold cursor-pointer ">
+                Begin Free Trial
               </button>
             </div>
 
@@ -256,15 +289,15 @@ function Home() {
                   <li className="flex items-center"><Check className="w-5 h-5 text-green-300 mr-2" /> Priority email support</li>
                   <li className="flex items-center"><Check className="w-5 h-5 text-green-300 mr-2" /> Branded PDF templates</li>
                 </ul>
-                <button className="w-full bg-white text-blue-600 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 font-semibold shadow-lg">
-                  Start Free Trial
+                <button onClick={() => navigate('/UpgradePage')} className="w-full bg-white text-blue-600 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 font-semibold shadow-lg cursor-pointer">
+                  Start Pro Today
                 </button>
               </div>
             </div>
 
             {/* Business Plan */}
             <div className="bg-white border-2 border-gray-200 rounded-3xl shadow-lg p-8 flex flex-col items-center w-full lg:w-80 transition-all duration-300 hover:shadow-2xl hover:border-purple-300 group">
-              <h3 className="text-2xl font-semibold mb-2 text-gray-800">Business</h3>
+              <h3 className="text-2xl font-semibold mb-2 text-gray-800">Enterprise</h3>
               <p className="text-gray-600 mb-6 text-center">For teams and enterprises with advanced needs</p>
               <div className="mb-6">
                 <p className="text-5xl font-bold text-purple-600 mb-2">$49<span className="text-xl font-medium">/mo</span></p>
@@ -275,7 +308,7 @@ function Home() {
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Priority support & SLA</li>
                 <li className="flex items-center"><Check className="w-5 h-5 text-green-500 mr-2" /> Team access and permissions</li>
               </ul>
-              <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform group-hover:scale-105">
+              <button onClick={sendEmail} className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform group-hover:scale-105 cursor-pointer">
                 Contact Sales
               </button>
             </div>
@@ -424,7 +457,7 @@ function Home() {
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to get started?</h2>
           <p className="text-xl mb-10 text-blue-100">Join thousands of developers who trust InvoiceAPI</p>
-          <button onClick={() => navigate('/signup')}
+          <button onClick={() => navigate('/Registration')}
           className="inline-block bg-white text-blue-600 font-bold px-10 py-5 rounded-2xl shadow-2xl hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 text-lg cursor-pointer">
             Get Your API Key Now
           </button>

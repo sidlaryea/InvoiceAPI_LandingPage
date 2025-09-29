@@ -31,7 +31,7 @@ export default function ExpensesPage() {
 
   // Various states
   // const [notification, setNotification] = useState(null);
-  // const [selectedExpense, setSelectedExpense] = useState(null);
+  const [selectedExpense, setSelectedExpense] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   // const [loading, setLoading] = useState(false);
   const [notification, ] = useState(null);
@@ -71,6 +71,14 @@ export default function ExpensesPage() {
     calculatedCost: 0,
     purpose: '',
   });
+  
+  // Calculate total cost based on distance and ratePerKm
+  useEffect(() => {
+    const distance = parseFloat(mileageFormData.distance) || 0;
+    const rate = parseFloat(mileageFormData.ratePerKm) || 0;
+    const totalCost = distance * rate;
+    setMileageFormData(prev => ({ ...prev, calculatedCost: totalCost.toFixed(2) }));
+  }, [mileageFormData.distance, mileageFormData.ratePerKm]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -203,6 +211,7 @@ export default function ExpensesPage() {
   const switchTab = (tab) => {
     setCurrentTab(tab);
     resetForms();
+    setSelectedExpense(null);
   };
 
   // Calculate mileage cost
@@ -343,14 +352,16 @@ export default function ExpensesPage() {
             <div className="p-6 border-b">
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 {/* Search Input */}
+                <div className="flex-1">
                 <input
                   type="text"
-                  className="flex-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   placeholder="Search expense by ID..."
                   id="searchInput"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                </div>
 
                 {/* Tab Buttons */}
                 <div className="tab-buttons flex space-x-2 mt-4 md:mt-0">
@@ -394,14 +405,14 @@ export default function ExpensesPage() {
                   No Mileage entries found. Create your first mileage entry!
                 </div>
               ) : (
-                <table className="w-full table-auto border-collapse border border-gray-200">
+                <table className="w-full ">
                   <thead className="bg-gray-50">
                     <tr>
                       {currentTab === 'expenses' ? (
                         <>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expense ID</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                          
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
@@ -413,8 +424,7 @@ export default function ExpensesPage() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distance (km)</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate/km</th>
+                         
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -426,13 +436,13 @@ export default function ExpensesPage() {
                     {currentTab === 'expenses'
                       ? filteredExpenses.map((exp) => (
                           <tr key={exp.id} className="hover:bg-gray-50">
-                            <td>{exp.id}</td>
-                            <td>{exp.date}</td>
-                            <td>{exp.category}</td>
-                            <td>{exp.amount}</td>
-                            <td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exp.id}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exp.date}</td>
+                            
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exp.amount}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               <span
-                                className={`status-badge ${
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                   exp.status.toLowerCase() === 'pending'
                                     ? 'status-pending'
                                     : exp.status.toLowerCase() === 'approved'
@@ -444,28 +454,61 @@ export default function ExpensesPage() {
                               </span>
                             </td>
                             <td>{exp.description}</td>
-                            <td className="actions space-x-2">
-                              <button className="action-btn" title="View">👁</button>
-                              <button className="action-btn" title="Edit">✏️</button>
-                              <button className="action-btn" title="Delete">🗑️</button>
-                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            <Download size={16} />
+                          </button>
+                          <button
+                            onClick
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                           </tr>
                         ))
                       : filteredMileage.map((mil) => (
                           <tr key={mil.id} className="hover:bg-gray-50">
-                            <td>{mil.id}</td>
-                            <td>{mil.date}</td>
-                            <td>{mil.from}</td>
-                            <td>{mil.to}</td>
-                            <td>{mil.distance}</td>
-                            <td>{mil.rate}</td>
-                            <td>{mil.totalCost}</td>
-                            <td>{mil.purpose}</td>
-                            <td className="actions space-x-2">
-                              <button className="action-btn" title="View">👁</button>
-                              <button className="action-btn" title="Edit">✏️</button>
-                              <button className="action-btn" title="Delete">🗑️</button>
-                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.id}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.date}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.from}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.to}</td>
+                            
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.totalCost}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.purpose}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            <Download size={16} />
+                          </button>
+                          <button
+                            onClick
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                           </tr>
                         ))}
                   </tbody>
@@ -473,177 +516,365 @@ export default function ExpensesPage() {
               )}
             </div>
           </div>
+          {/* Right Column - Detail / Expense and Mileage Form */}
+          <div className="bg-white rounded-lg shadow-sm ">
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-  <h3 className="text-lg font-medium text-gray-900 mb-4">
-    {isCreating
-      ? `Create ${currentTab === "expenses" ? "Expense" : "Mileage"} Entry`
-      : `${currentTab === "expenses" ? "Expenses" : "Mileage"} Overview`}
-  </h3>
+            {(isCreating || selectedExpense) && (
+              
+              <div className="p-6 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {isCreating
+                    ? `Create ${currentTab === "expenses" ? "Expense" : "Mileage"} Entry`
+                    : `${currentTab === "expenses" ? "Expense" : "Mileage"} Details`}
+                </h2>
+                <button
+                  onClick={() => {
+                    setIsCreating(false);
+                    setSelectedExpense(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            
+            )}
 
-  {/* If creating, show form */}
-  {isCreating ? (
-    <div className="space-y-4">
-      {currentTab === "expenses" ? (
-        <>
-          <div>
-            <label className="block text-sm font-medium">Date *</label>
-            <input
-              type="date"
-              required
-              className="w-full border rounded px-3 py-2"
-              value={expenseFormData.date}
-              onChange={(e) =>
-                setExpenseFormData((prev) => ({
-                  ...prev,
-                  date: e.target.value,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Category *</label>
-            <select
-              required
-              className="w-full border rounded px-3 py-2"
-              value={expenseFormData.category}
-              onChange={(e) =>
-                setExpenseFormData((prev) => ({
-                  ...prev,
-                  category: e.target.value,
-                }))
-              }
-            >
-              <option value="">Select category</option>
-              <option value="office-supplies">Office Supplies</option>
-              <option value="travel">Travel</option>
-              <option value="rent">Rent</option>
-              <option value="utilities">Utilities</option>
-              <option value="meals">Meals & Entertainment</option>
-              <option value="equipment">Equipment</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Amount (GH₵) *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              className="w-full border rounded px-3 py-2"
-              value={expenseFormData.amount}
-              onChange={(e) =>
-                setExpenseFormData((prev) => ({
-                  ...prev,
-                  amount: e.target.value,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Description</label>
-            <textarea
-              className="w-full border rounded px-3 py-2"
-              placeholder="Enter details..."
-              value={expenseFormData.description}
-              onChange={(e) =>
-                setExpenseFormData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div>
-            <label className="block text-sm font-medium">Date *</label>
-            <input
-              type="date"
-              required
-              className="w-full border rounded px-3 py-2"
-              value={mileageFormData.date}
-              onChange={(e) =>
-                setMileageFormData((prev) => ({
-                  ...prev,
-                  date: e.target.value,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Start Location *</label>
-            <input
-              type="text"
-              placeholder="e.g., Accra"
-              className="w-full border rounded px-3 py-2"
-              value={mileageFormData.startLocation}
-              onChange={(e) =>
-                setMileageFormData((prev) => ({
-                  ...prev,
-                  startLocation: e.target.value,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">End Location *</label>
-            <input
-              type="text"
-              placeholder="e.g., Tema"
-              className="w-full border rounded px-3 py-2"
-              value={mileageFormData.endLocation}
-              onChange={(e) =>
-                setMileageFormData((prev) => ({
-                  ...prev,
-                  endLocation: e.target.value,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Distance (km) *</label>
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              className="w-full border rounded px-3 py-2"
-              value={mileageFormData.distance}
-              onChange={(e) =>
-                setMileageFormData((prev) => ({
-                  ...prev,
-                  distance: e.target.value,
-                }))
-              }
-            />
-          </div>
-        </>
-      )}
+{isCreating ? (
+              <div className="p-6">
+                <div className="space-y-4">
+                  {currentTab === "expenses" ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium">Date *</label>
+                        <input
+                          type="date"
+                          required
+                          className="w-full border rounded px-3 py-2"
+                          value={expenseFormData.date}
+                          onChange={(e) =>
+                            setExpenseFormData((prev) => ({
+                              ...prev,
+                              date: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium">Category *</label>
+                        <select
+                          required
+                          className="w-full border rounded px-3 py-2"
+                          value={expenseFormData.category}
+                          onChange={(e) =>
+                            setExpenseFormData((prev) => ({
+                              ...prev,
+                              category: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select category</option>
+                          <option value="office-supplies">Office Supplies</option>
+                          <option value="travel">Travel</option>
+                          <option value="rent">Rent</option>
+                          <option value="utilities">Utilities</option>
+                          <option value="meals">Meals & Entertainment</option>
+                          <option value="equipment">Equipment</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium">Amount (GH₵) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          className="w-full border rounded px-3 py-2"
+                          value={expenseFormData.amount}
+                          onChange={(e) =>
+                            setExpenseFormData((prev) => ({
+                              ...prev,
+                              amount: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium">Description</label>
+                        <textarea
+                          className="w-full border rounded px-3 py-2"
+                          placeholder="Enter details..."
+                          value={expenseFormData.description}
+                          onChange={(e) =>
+                            setExpenseFormData((prev) => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium">Upload Receipt</label>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="w-full border rounded px-3 py-2"
+                          onChange={(e) =>
+                            setExpenseFormData((prev) => ({
+                              ...prev,
+                              receiptFile: e.target.files[0],
+                            }))
+                          }
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                        {/* Date */}
+                        <div>
+                          <label className="block text-sm font-medium">Date *</label>
+                          <input
+                            type="date"
+                            required
+                            className="w-full border rounded px-3 py-2"
+                            value={mileageFormData.date}
+                            onChange={(e) =>
+                              setMileageFormData((prev) => ({
+                                ...prev,
+                                date: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
 
-      {/* Footer buttons */}
-      <div className="flex justify-end space-x-4 pt-4">
-        <button
-          className="px-4 py-2 rounded border bg-gray-100 hover:bg-gray-200"
-          onClick={() => setIsCreating(false)}
-        >
-          Cancel
-        </button>
-        <button
-          className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700"
-          onClick={saveRecord}
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  ) : (
-    <p className="text-gray-500">
-      Select a record from the left, or click **New** to add one.
-    </p>
-  )}
-</div>
+                        {/* Start Location */}
+                        <div>
+                          <label className="block text-sm font-medium">Start Location *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Accra"
+                            className="w-full border rounded px-3 py-2"
+                            value={mileageFormData.startLocation}
+                            onChange={(e) =>
+                              setMileageFormData((prev) => ({
+                                ...prev,
+                                startLocation: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {/* End Location */}
+                        <div>
+                          <label className="block text-sm font-medium">End Location *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Tema"
+                            className="w-full border rounded px-3 py-2"
+                            value={mileageFormData.endLocation}
+                            onChange={(e) =>
+                              setMileageFormData((prev) => ({
+                                ...prev,
+                                endLocation: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {/* Distance */}
+                        <div>
+                          <label className="block text-sm font-medium">Distance (km) *</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            required
+                            className="w-full border rounded px-3 py-2"
+                            value={mileageFormData.distance}
+                            onChange={(e) =>
+                              setMileageFormData((prev) => ({
+                                ...prev,
+                                distance: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {/* Rate Per Km */}
+                        <div>
+                          <label className="block text-sm font-medium">Rate per Km *</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            className="w-full border rounded px-3 py-2"
+                            value={mileageFormData.ratePerKm}
+                            onChange={(e) =>
+                              setMileageFormData((prev) => ({
+                                ...prev,
+                                ratePerKm: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {/* Purpose */}
+                        <div>
+                          <label className="block text-sm font-medium">Purpose</label>
+                          <textarea
+                            placeholder="e.g., Client meeting"
+                            className="w-full border rounded px-3 py-2"
+                            value={mileageFormData.purpose}
+                            onChange={(e) =>
+                              setMileageFormData((prev) => ({
+                                ...prev,
+                                purpose: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {/* UserId (hidden or pre-filled if user is logged in) */}
+                        <input
+                          type="hidden"
+                          value={mileageFormData.userId}
+                          onChange={(e) =>
+                            setMileageFormData((prev) => ({
+                              ...prev,
+                              userId: e.target.value,
+                            }))
+                          }
+                        />
+
+                        {/* Auto-calculated Total Cost */}
+                        <div>
+                          <label className="block text-sm font-medium">Total Cost</label>
+                          <input
+                            type="text"
+                            readOnly
+                            className="w-full border rounded px-3 py-2 bg-gray-100"
+                            value={
+                              mileageFormData.distance && mileageFormData.ratePerKm
+                                ? (parseFloat(mileageFormData.distance) *
+                                    parseFloat(mileageFormData.ratePerKm)).toFixed(2)
+                                : "0.00"
+                            }
+                          />
+                        </div>
+                      </>
+                  )}
+
+                  {/* Footer buttons */}
+                  <div className="flex justify-end space-x-4 pt-4">
+                    <button
+                      className="px-4 py-2 rounded border bg-gray-100 hover:bg-gray-200"
+                      onClick={() => setIsCreating(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700"
+                      onClick={saveRecord}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : selectedExpense ? (
+              selectedExpense.category ? (
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Expense Information</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Expense ID:</span>
+                          <span className="font-medium">{selectedExpense.id}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Date:</span>
+                          <span className="font-medium">{selectedExpense.date}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Category:</span>
+                          <span className="font-medium">{selectedExpense.category}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Amount:</span>
+                          <span className="font-medium">{selectedExpense.amount}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Status:</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            selectedExpense.status.toLowerCase() === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : selectedExpense.status.toLowerCase() === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {selectedExpense.status}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Description:</span>
+                          <div className="font-medium">{selectedExpense.description}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">Mileage Information</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Mileage ID:</span>
+                          <span className="font-medium">{selectedExpense.id}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Date:</span>
+                          <span className="font-medium">{selectedExpense.date}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">From:</span>
+                          <span className="font-medium">{selectedExpense.from}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">To:</span>
+                          <span className="font-medium">{selectedExpense.to}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Distance:</span>
+                          <span className="font-medium">{selectedExpense.distance} km</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Rate:</span>
+                          <span className="font-medium">{selectedExpense.rate}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Total Cost:</span>
+                          <span className="font-medium">{selectedExpense.totalCost}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Purpose:</span>
+                          <div className="font-medium">{selectedExpense.purpose}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="p-8 text-center text-gray-500">
+                Select a record from the left, or Create a new one.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout>

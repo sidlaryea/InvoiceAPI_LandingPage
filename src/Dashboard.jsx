@@ -318,7 +318,7 @@ const closeChangePasswordDialog = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
       {/* Enhanced Navbar */}
       <header className="bg-white/95 backdrop-blur-sm shadow-lg fixed w-full z-50 transition-all duration-300">
-        <nav className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
+        <div className="absolute left-0 top-0 h-full flex items-center px-4">
           <div className="flex items-center space-x-3 group">
             <div className="relative">
               <img src="./logo.png" alt="InvoiceAPI Logo" className="h-9 w-9 transition-transform group-hover:scale-110" />
@@ -328,17 +328,19 @@ const closeChangePasswordDialog = () => {
               InvoiceAPI by SidConsult
             </span>
           </div>
+        </div>
+        <nav className="max-w-7xl mx-auto px-4 py-2 flex justify-end items-center">
           {/* Navigation Links */}
-          <div className="hidden md:flex space-x-6 text-sm font-medium text-gray-700 transition-colors group ml-auto mr-4">
+          <div className="hidden md:flex space-x-6 text-sm font-medium text-gray-700 transition-colors group">
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold underline">Dashboard</a>
             <a href="./invoicedashboard" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Generate Invoices</a>
             <a href="./UpgradePage" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Billing</a>
-            <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">API Documentation</a>
+            <a href="./InvoiceAPI_Developer_Onboarding_Guide.pdf" download="API_Documentation.pdf" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">API Documentation</a>
             <a href="#/" className="text-blue-600 hover:text-blue-600 transition-colors font-bold">Support</a>
           </div>
           {/* Profile Section */}
            <div className="flex items-center space-x-4">
-            
+
            <div className="text-l font-bold text-blue-600 transition-colors group-hover:text-blue-700">:</div>
               <div className="relative group">
                <div
@@ -346,10 +348,10 @@ const closeChangePasswordDialog = () => {
   >
                   <img src={profileImageUrl} alt="User" className="w-10 h-10 rounded-full object-cover ms-3" />
                 </div>
-                
+
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-300">
-                   
-                    
+
+
                     <a
                       href="#/"
                       onClick={openModal}
@@ -365,7 +367,7 @@ const closeChangePasswordDialog = () => {
                       Sign Out
                     </a>
                   </div>
-                
+
               </div>
             </div>
         </nav>

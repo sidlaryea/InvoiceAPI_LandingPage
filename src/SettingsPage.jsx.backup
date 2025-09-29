@@ -1,0 +1,819 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Tab,
+  Tabs,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  IconButton,
+  InputAdornment
+} from '@mui/material';
+import {
+  Person,
+  Business,
+  CreditCard,
+  LocalShipping,
+  Api,
+  Notifications,
+  Security,
+  Edit,
+  Save,
+  Email,
+  Phone,
+  LocationOn,
+  Language,
+  CurrencyExchange,
+  Schedule,
+  Webhook,
+  Key,
+  Shield,
+  Visibility,
+  VisibilityOff
+} from '@mui/icons-material';
+import DashboardLayout from './components/DashboardLayout';
+import ProfileImage from './components/ProfileImage';
+import axios from 'axios';
+
+const TabPanel = ({ children, value, index, ...other }) => (
+  <div
+    role="tabpanel"
+    hidden={value !== index}
+    id={`settings-tabpanel-${index}`}
+    aria-labelledby={`settings-tab-${index}`}
+    {...other}
+  >
+    {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+  </div>
+);
+
+const SettingsPage = () => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Dashboard layout state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isChangeImageDialogOpen, setIsChangeImageDialogOpen] = useState(false);
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("/user-placeholder.png");
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  const handleSave = (section) => {
+    console.log(`Saving ${section} settings...`);
+    // Add save logic here
+  };
+
+  // Dashboard layout handlers
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleOpenChangeImageDialog = () => {
+    setIsChangeImageDialogOpen(true);
+  };
+
+  const handleCloseChangeImageDialog = () => {
+    setIsChangeImageDialogOpen(false);
+  };
+
+  const handleOpenChangePasswordDialog = () => {
+    setIsChangePasswordDialogOpen(true);
+  };
+
+  const handleCloseChangePasswordDialog = () => {
+    setIsChangePasswordDialogOpen(false);
+  };
+
+  const handleFileSelect = (file) => {
+    setSelectedFile(file);
+  };
+
+  const handlePasswordChange = () => {
+    // Add password change logic here
+    console.log('Changing password...');
+    setIsChangePasswordDialogOpen(false);
+  };
+
+  const handleImageUpload = () => {
+    // Add image upload logic here
+    console.log('Uploading image...');
+    setIsChangeImageDialogOpen(false);
+  };
+
+  return (
+    <DashboardLayout
+      isSidebarOpen={isSidebarOpen}
+      onToggleSidebar={handleToggleSidebar}
+      isModalOpen={isModalOpen}
+      onOpenModal={handleOpenModal}
+      onCloseModal={handleCloseModal}
+      isChangeImageDialogOpen={isChangeImageDialogOpen}
+      onOpenChangeImageDialog={handleOpenChangeImageDialog}
+      onCloseChangeImageDialog={handleCloseChangeImageDialog}
+      isChangePasswordDialogOpen={isChangePasswordDialogOpen}
+      onOpenChangePasswordDialog={handleOpenChangePasswordDialog}
+      onCloseChangePasswordDialog={handleCloseChangePasswordDialog}
+      onFileSelect={handleFileSelect}
+      onPasswordChange={handlePasswordChange}
+      onImageUpload={handleImageUpload}
+      selectedFile={selectedFile}
+      currentPassword={currentPassword}
+      newPassword={newPassword}
+      confirmNewPassword={confirmNewPassword}
+      profileImageUrl={profileImageUrl}
+    >
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <Typography variant="h4" component="h1" className="text-gray-900 font-bold mb-2">
+              Settings
+            </Typography>
+            <Typography variant="body1" className="text-gray-600">
+              Manage your account settings and preferences
+            </Typography>
+          </div>
+
+          {/* Settings Container */}
+          <Paper elevation={2} className="bg-white">
+          {/* Tab Navigation */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="scrollable"
+              scrollButtons="auto"
+              className="px-4"
+            >
+              <Tab
+                icon={<Person />}
+                label="Profile"
+                id="settings-tab-0"
+                aria-controls="settings-tabpanel-0"
+                className="min-w-0"
+              />
+              <Tab
+                icon={<Business />}
+                label="Business"
+                id="settings-tab-1"
+                aria-controls="settings-tabpanel-1"
+                className="min-w-0"
+              />
+              <Tab
+                icon={<CreditCard />}
+                label="Billing"
+                id="settings-tab-2"
+                aria-controls="settings-tabpanel-2"
+                className="min-w-0"
+              />
+              <Tab
+                icon={<LocalShipping />}
+                label="Delivery"
+                id="settings-tab-3"
+                aria-controls="settings-tabpanel-3"
+                className="min-w-0"
+              />
+              <Tab
+                icon={<Api />}
+                label="API"
+                id="settings-tab-4"
+                aria-controls="settings-tabpanel-4"
+                className="min-w-0"
+              />
+              <Tab
+                icon={<Notifications />}
+                label="Notifications"
+                id="settings-tab-5"
+                aria-controls="settings-tabpanel-5"
+                className="min-w-0"
+              />
+              <Tab
+                icon={<Security />}
+                label="Security"
+                id="settings-tab-6"
+                aria-controls="settings-tabpanel-6"
+                className="min-w-0"
+              />
+            </Tabs>
+          </Box>
+
+          {/* Profile Tab */}
+          <TabPanel value={activeTab} index={0}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                Profile Information
+              </Typography>
+
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={8}>
+                  <div className="space-y-4">
+                    <TextField
+                      fullWidth
+                      label="Full Name"
+                      defaultValue="John Doe"
+                      variant="outlined"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Email Address"
+                      defaultValue="john.doe@example.com"
+                      variant="outlined"
+                      type="email"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Phone Number"
+                      defaultValue="+1 (555) 123-4567"
+                      variant="outlined"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Company"
+                      defaultValue="Acme Corp"
+                      variant="outlined"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Job Title"
+                      defaultValue="Software Engineer"
+                      variant="outlined"
+                    />
+                  </div>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Card className="text-center">
+                    <CardContent>
+                      <Avatar
+                        sx={{ width: 80, height: 80, mx: 'auto', mb: 2 }}
+                        className="bg-blue-500"
+                      >
+                        JD
+                      </Avatar>
+                      <Typography variant="h6" className="mb-2">
+                        Profile Picture
+                      </Typography>
+                      <Button variant="outlined" startIcon={<Edit />}>
+                        Change Photo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('Profile')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* Business Tab */}
+          <TabPanel value={activeTab} index={1}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                Business Information
+              </Typography>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextField
+                  fullWidth
+                  label="Business Name"
+                  defaultValue="Acme Corporation"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  label="Business Email"
+                  defaultValue="business@acme.com"
+                  variant="outlined"
+                  type="email"
+                />
+                <TextField
+                  fullWidth
+                  label="Tax ID"
+                  defaultValue="123-456-789"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  label="Registration Number"
+                  defaultValue="REG123456"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  label="Business Address"
+                  defaultValue="123 Business St, City, State 12345"
+                  variant="outlined"
+                  multiline
+                  rows={2}
+                />
+                <TextField
+                  fullWidth
+                  label="Industry"
+                  defaultValue="Technology"
+                  variant="outlined"
+                />
+              </div>
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('Business')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* Billing Tab */}
+          <TabPanel value={activeTab} index={2}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                Billing & Payment
+              </Typography>
+
+              <Card className="mb-6">
+                <CardContent>
+                  <Typography variant="h6" className="mb-4 text-green-600">
+                    Current Plan: Pro Plan
+                  </Typography>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <Typography variant="h4" className="font-bold text-blue-600">
+                        $29
+                      </Typography>
+                      <Typography variant="body2" className="text-gray-600">
+                        per month
+                      </Typography>
+                    </div>
+                    <div className="text-center">
+                      <Typography variant="h4" className="font-bold text-blue-600">
+                        Unlimited
+                      </Typography>
+                      <Typography variant="body2" className="text-gray-600">
+                        invoices
+                      </Typography>
+                    </div>
+                    <div className="text-center">
+                      <Typography variant="h4" className="font-bold text-blue-600">
+                        24/7
+                      </Typography>
+                      <Typography variant="body2" className="text-gray-600">
+                        support
+                      </Typography>
+                    </div>
+                  </div>
+                  <Button variant="outlined" color="primary">
+                    Upgrade Plan
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Typography variant="h6" className="mb-4">
+                Payment Method
+              </Typography>
+              <Card className="mb-4">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <CreditCard className="text-gray-600" />
+                      <div>
+                        <Typography variant="body1">•••• •••• •••• 4242</Typography>
+                        <Typography variant="body2" className="text-gray-600">
+                          Expires 12/25
+                        </Typography>
+                      </div>
+                    </div>
+                    <Button variant="outlined" size="small">
+                      Update
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('Billing')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* Delivery Tab */}
+          <TabPanel value={activeTab} index={3}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                Delivery Settings
+              </Typography>
+
+              <div className="space-y-4">
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Enable automatic delivery tracking"
+                />
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Send delivery notifications to customers"
+                />
+                <FormControlLabel
+                  control={<Switch />}
+                  label="Require signature on delivery"
+                />
+              </div>
+
+              <Divider />
+
+              <Typography variant="h6" className="mb-4">
+                Default Delivery Options
+              </Typography>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextField
+                  fullWidth
+                  label="Default Delivery Time"
+                  defaultValue="2-3 business days"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  label="Shipping Provider"
+                  defaultValue="Standard Shipping"
+                  variant="outlined"
+                />
+                <TextField
+                  fullWidth
+                  label="Free Shipping Threshold"
+                  defaultValue="$50.00"
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Default Shipping Cost"
+                  defaultValue="$5.99"
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  }}
+                />
+              </div>
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('Delivery')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* API Tab */}
+          <TabPanel value={activeTab} index={4}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                API Settings
+              </Typography>
+
+              <Card className="mb-6">
+                <CardContent>
+                  <Typography variant="h6" className="mb-4">
+                    API Keys
+                  </Typography>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                      <div>
+                        <Typography variant="body2" className="font-medium">
+                          Live API Key
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-600 font-mono">
+                          sk_live_••••••••••••••••••••••••
+                        </Typography>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outlined" size="small">
+                          Copy
+                        </Button>
+                        <Button variant="outlined" size="small" color="secondary">
+                          Regenerate
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                      <div>
+                        <Typography variant="body2" className="font-medium">
+                          Test API Key
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-600 font-mono">
+                          sk_test_••••••••••••••••••••••••
+                        </Typography>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outlined" size="small">
+                          Copy
+                        </Button>
+                        <Button variant="outlined" size="small" color="secondary">
+                          Regenerate
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Typography variant="h6" className="mb-4">
+                Webhook Configuration
+              </Typography>
+
+              <TextField
+                fullWidth
+                label="Webhook URL"
+                defaultValue="https://your-app.com/webhooks"
+                variant="outlined"
+                className="mb-4"
+              />
+
+              <FormControlLabel
+                control={<Switch defaultChecked />}
+                label="Enable webhook notifications"
+              />
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('API')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* Notifications Tab */}
+          <TabPanel value={activeTab} index={5}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                Notification Preferences
+              </Typography>
+
+              <div className="space-y-4">
+                <Typography variant="h6" className="mb-3">
+                  Email Notifications
+                </Typography>
+
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Invoice created notifications"
+                />
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Payment received notifications"
+                />
+                <FormControlLabel
+                  control={<Switch />}
+                  label="Overdue invoice reminders"
+                />
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Weekly summary reports"
+                />
+                <FormControlLabel
+                  control={<Switch />}
+                  label="System maintenance notifications"
+                />
+
+                <Divider className="my-6" />
+
+                <Typography variant="h6" className="mb-3">
+                  Push Notifications
+                </Typography>
+
+                <FormControlLabel
+                  control={<Switch defaultChecked />}
+                  label="Browser push notifications"
+                />
+                <FormControlLabel
+                  control={<Switch />}
+                  label="Mobile app notifications"
+                />
+
+                <Divider className="my-6" />
+
+                <Typography variant="h6" className="mb-3">
+                  Notification Schedule
+                </Typography>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TextField
+                    fullWidth
+                    label="Quiet Hours Start"
+                    defaultValue="22:00"
+                    variant="outlined"
+                    type="time"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Quiet Hours End"
+                    defaultValue="08:00"
+                    variant="outlined"
+                    type="time"
+                  />
+                </div>
+              </div>
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('Notifications')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* Security Tab */}
+          <TabPanel value={activeTab} index={6}>
+            <div className="space-y-6">
+              <Typography variant="h6" className="font-semibold text-gray-900 mb-4">
+                Security Settings
+              </Typography>
+
+              <Card className="mb-6">
+                <CardContent>
+                  <Typography variant="h6" className="mb-4">
+                    Change Password
+                  </Typography>
+                  <div className="space-y-4">
+                    <TextField
+                      fullWidth
+                      label="Current Password"
+                      variant="outlined"
+                      type={showPassword ? 'text' : 'password'}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <TextField
+                      fullWidth
+                      label="New Password"
+                      variant="outlined"
+                      type={showPassword ? 'text' : 'password'}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Confirm New Password"
+                      variant="outlined"
+                      type={showPassword ? 'text' : 'password'}
+                    />
+                    <Button variant="contained" className="bg-blue-600 hover:bg-blue-700">
+                      Update Password
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Typography variant="h6" className="mb-4">
+                Two-Factor Authentication
+              </Typography>
+
+              <Card className="mb-6">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="body1" className="font-medium">
+                        Two-Factor Authentication
+                      </Typography>
+                      <Typography variant="body2" className="text-gray-600">
+                        Add an extra layer of security to your account
+                      </Typography>
+                    </div>
+                    <FormControlLabel
+                      control={<Switch />}
+                      label=""
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Typography variant="h6" className="mb-4">
+                Active Sessions
+              </Typography>
+
+              <Card>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded">
+                      <div>
+                        <Typography variant="body2" className="font-medium">
+                          Current Session
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-600">
+                          Chrome on Windows • Active now
+                        </Typography>
+                      </div>
+                      <Typography variant="body2" className="text-green-600 font-medium">
+                        Current
+                      </Typography>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded">
+                      <div>
+                        <Typography variant="body2" className="font-medium">
+                          Mobile App
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-600">
+                          iPhone • Last active 2 hours ago
+                        </Typography>
+                      </div>
+                      <Button variant="outlined" size="small" color="secondary">
+                        Revoke
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Divider />
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={() => handleSave('Security')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </TabPanel>
+        </Paper>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;

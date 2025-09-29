@@ -108,8 +108,8 @@ const token = localStorage.getItem("jwtToken");
         'API access',
         'Custom fields'
       ],
-      buttonText: 'Start Free Trial',
-      buttonStyle: 'bg-white text-blue-600 hover:bg-blue-50 border-2 border-white',
+      buttonText: 'Click To Subscribe',
+      buttonStyle: 'bg-blue-600 hover:bg-blue-700 cursor-pointer',
       popular: true
     },
     {
@@ -128,7 +128,7 @@ const token = localStorage.getItem("jwtToken");
         'Dedicated account manager'
       ],
       buttonText: 'Contact Sales',
-      buttonStyle: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700',
+      buttonStyle: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 cursor-pointer',
       popular: false
     }
   ];

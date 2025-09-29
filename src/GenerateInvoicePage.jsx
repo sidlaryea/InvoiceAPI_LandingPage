@@ -177,6 +177,8 @@ if (!token) {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      
       const { profileImageUrl } = res.data;
       setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
     } catch (err) {
