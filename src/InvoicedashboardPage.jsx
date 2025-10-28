@@ -17,6 +17,7 @@ import {
 
 export default function InvoiceDashboardPage() {
   const [transactions, setTransactions] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isChangeImageDialogOpen, setIsChangeImageDialogOpen] = useState(false);
@@ -74,7 +75,7 @@ export default function InvoiceDashboardPage() {
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/Invoice/GetInvoicesByUserId`,
         {
-          headers: { Authorization: `Bearer ${token}` 
+          headers: { Authorization: `Bearer ${token}`
           , "X-API-KEY": apiKey
         },
         }
@@ -83,6 +84,21 @@ export default function InvoiceDashboardPage() {
       setTransactions(res.data || []);
     } catch (err) {
       console.error("Failed to fetch transactions", err);
+    }
+  };
+
+  // 🔹 Fetch Expenses
+  const fetchExpenses = async () => {
+    const token = localStorage.getItem("jwtToken");
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/Expense/by-user`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("Fetched expenses:", res.data); // Debug log
+      setExpenses(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch expenses", err);
     }
   };
 
@@ -108,6 +124,7 @@ export default function InvoiceDashboardPage() {
   useEffect(() => {
     fetchUserProfile();
     fetchTransactions();
+    fetchExpenses();
   }, []);
 
   const handleSignOut = () => {
@@ -179,6 +196,26 @@ const chartData = last7days.map((dateKey) => {
   };
 });
 
+ // Country info for header
+  const getFlagEmoji = (code) => {
+    return code
+      ?.toUpperCase()
+      .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+  };
+  const country = localStorage.getItem('country');
+  const countryCode = localStorage.getItem('countryCode');
+
+// 🔹 Build last 7 days expenses chart data
+const expensesChartData = last7days.map((dateKey) => {
+  const exps = expenses.filter(
+    (e) => new Date(e.date).toISOString().slice(0, 10) === dateKey
+  );
+  return {
+    date: dateKey.slice(5), // MM-DD format
+    expenses: calcTotal(exps, "amount"),
+  };
+});
+
 useApiInterceptor();
 
   return (
@@ -208,12 +245,18 @@ useApiInterceptor();
       }}
     >
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Hi. Here’s a glance of your business at All Branches
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Hi. Here’s a glance of your business at All Branches
+          </h1>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
+            <span className="text-sm text-gray-600">Country:</span>
+            <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span>
+          </div>
+        </div>
 
         {/* 🔹 KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Payments Collected Today</p>
             <h2 className="text-2xl font-bold text-gray-800">
@@ -237,6 +280,14 @@ useApiInterceptor();
             </h2>
             {trend(todayCustomers, yesterdayCustomers)}
           </div>
+
+          <div className="bg-white p-4 rounded shadow">
+            <p className="text-sm text-gray-500">Total Expenses</p>
+            <h2 className="text-2xl font-bold text-gray-800">
+              GHS {formatNumber(expenses.reduce((sum, exp) => sum + exp.amount, 0))}
+            </h2>
+            <p className="text-gray-400 text-sm mt-1">All time</p>
+          </div>
         </div>
 
         {/* 🔹 Sales Trends Chart */}
@@ -246,22 +297,45 @@ useApiInterceptor();
               Sales Trends For{" "}
               <span className="text-teal-500">PAST 7 DAYS</span>
             </h2>
-            
+
           </div>
           <div className="mt-4 h-60">
-  <ResponsiveContainer width="100%" height="100%">
-    <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="date" />
-      <YAxis />
-      <Tooltip formatter={(value) => `GHS ${formatNumber(value)}`} />
-      <Legend />
-      <Line type="monotone" dataKey="payments" stroke="#14b8a6" strokeWidth={2} />
-      <Line type="monotone" dataKey="balance" stroke="#f59e0b" strokeWidth={2} />
-    </LineChart>
-  </ResponsiveContainer>
-</div>
-        </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip formatter={(value) => `GHS ${formatNumber(value)}`} />
+                <Legend />
+                <Line type="monotone" dataKey="payments" stroke="#14b8a6" strokeWidth={2} />
+                <Line type="monotone" dataKey="balance" stroke="#f59e0b" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          </div>
+
+        {/* 🔹 Expenses Trends Chart */}
+        <div className="bg-white p-4 rounded shadow">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">
+              Expenses Trends For{" "}
+              <span className="text-teal-500">PAST 7 DAYS</span>
+            </h2>
+
+          </div>
+          <div className="mt-4 h-60">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={expensesChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip formatter={(value) => `GHS ${formatNumber(value)}`} />
+                <Legend />
+                <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          </div>
 
         {/* 🔹 Last Transactions */}
         <div className="bg-white p-4 rounded shadow">

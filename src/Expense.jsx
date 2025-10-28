@@ -1,109 +1,64 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Download, Save, Eye, Edit3, X, MoveRight, Send } from "lucide-react";
+import { X, Plus, Search, Filter, Download, Upload, Calendar, CreditCard, Building2, Receipt, Tag, User, ChevronDown, Eye, Trash2, Check, XCircle, Clock, TrendingUp, TrendingDown } from "lucide-react";
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
-import AutocompleteSearch from './components/AutocompleteSearch';
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
-import SuccessModal from "./components/Ui/SuccessModal";
-//import { toast } from "react-hot-toast";
+import AddCategoryModal from "./components/AddExpenseCategoryModal";
+import ViewExpense from "./components/Ui/ViewExpense";
+import ApproveExpense from "./components/Ui/ApproveExpense";
 
 export default function ExpensesPage() {
-  // // const [formData, setFormData] = useState({
-  //   expenseId: 0,
-  //   date: '',
-  //   category: '',
-  //   Amount: '',
-  //   currency: 'GHS',
-  //   status: 'Ghana',
-  //   description: '',
-
-  //   //For mileage Registration
-  //   mileageId: '',
-  //   from: '',
-  //   to: '',
-  //   distance: '',
-  //   rate: '',
-  //   totalCost: '',
-  //   purpose: '',
-  //   // status: 'Draft',
-  //   createdBy: 'user.name||System',
-  // });
-
-  // Various states
-  // const [notification, setNotification] = useState(null);
-  const [selectedExpense, setSelectedExpense] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
-  // const [loading, setLoading] = useState(false);
-  const [notification, ] = useState(null);
-  const [loading, ] = useState(false);
-  const [success, ] = useState(null);
-  const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // State for profile image and dialogs
+  const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
   const [isChangeImageDialogOpen, setIsChangeImageDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  // New states for tab and search
-  const [currentTab, setCurrentTab] = useState('expenses');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Modal form states
-  const [expenseFormData, setExpenseFormData] = useState({
+  // New states for expense management layout
+  const [showModal, setShowModal] = useState(false);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showViewExpenseModal, setShowViewExpenseModal] = useState(false);
+  const [showApproveExpenseModal, setShowApproveExpenseModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState(null);
+  const [selectedExpenseForApproval, setSelectedExpenseForApproval] = useState(null);
+  // const [activeTab, setActiveTab] = useState('expenses');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [formData, setFormData] = useState({
     date: '',
     category: '',
     amount: '',
-    status: 'pending',
     description: '',
-    receiptFile: null,
+    merchant: '',
+    paymentMethod: '',
+    project: '',
+    receiptNumber: '',
+    taxAmount: '',
+    tags: []
   });
 
-  const [mileageFormData, setMileageFormData] = useState({
-    date: '',
-    startLocation: '',
-    endLocation: '',
-    distance: '',
-    ratePerKm: 2.50,
-    calculatedCost: 0,
-    purpose: '',
+  // Expenses data from API
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Stats data
+  const [stats, setStats] = useState({
+    totalExpenses: 0,
+    pendingApproval: 0,
+    totalAmount: 0,
+    thisMonthAmount: 0,
+    totalExpensesPercentage: 0,
+    thisMonthPercentage: 0,
   });
-  
-  // Calculate total cost based on distance and ratePerKm
-  useEffect(() => {
-    const distance = parseFloat(mileageFormData.distance) || 0;
-    const rate = parseFloat(mileageFormData.ratePerKm) || 0;
-    const totalCost = distance * rate;
-    setMileageFormData(prev => ({ ...prev, calculatedCost: totalCost.toFixed(2) }));
-  }, [mileageFormData.distance, mileageFormData.ratePerKm]);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => {
-    setIsModalOpen(false);
-    resetForms();
-  };
+  // Expense categories from API
+  const [expenseCategories, setExpenseCategories] = useState([]);
 
-  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-  const openChangeImageDialog = () => setIsChangeImageDialogOpen(true);
-  const closeChangeImageDialog = () => setIsChangeImageDialogOpen(false);
-  const openChangePasswordDialog = () => setIsChangePasswordDialogOpen(true);
-  const closeChangePasswordDialog = () => {
-    setIsChangePasswordDialogOpen(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmNewPassword("");
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setSelectedFile(file);
-    setExpenseFormData(prev => ({ ...prev, receiptFile: file }));
-  };
-
-  // Flag helper function
+  // Country info for header
   const getFlagEmoji = (code) => {
     return code
       ?.toUpperCase()
@@ -112,14 +67,67 @@ export default function ExpensesPage() {
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
 
+  // Categories for filter and form
+  const categories = [
+    { name: 'Travel', icon: '✈️', color: 'bg-blue-100 text-blue-700' },
+    { name: 'Meals', icon: '🍽️', color: 'bg-orange-100 text-orange-700' },
+    { name: 'Office Supplies', icon: '📦', color: 'bg-purple-100 text-purple-700' },
+    { name: 'Utilities', icon: '⚡', color: 'bg-yellow-100 text-yellow-700' },
+    { name: 'Transportation', icon: '🚗', color: 'bg-green-100 text-green-700' },
+    { name: 'Software', icon: '💻', color: 'bg-indigo-100 text-indigo-700' }
+  ];
+
+  // Get status text from number
+  const getStatusText = (status) => {
+    const statusMap = {
+      0: 'Draft',
+      1: 'Pending',
+      2: 'Approved',
+      3: 'Paid',
+      4: 'Rejected'
+    };
+    return statusMap[status] || 'Unknown';
+  };
+
+  // Get status element with color
+  const getStatusElement = (status) => {
+    const text = getStatusText(status);
+    const colorMap = {
+      'Draft': 'bg-gray-100 text-gray-800 border-gray-200',
+      'Pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'Approved': 'bg-green-100 text-green-800 border-green-200',
+      'Paid': 'bg-blue-100 text-blue-800 border-blue-200',
+      'Rejected': 'bg-red-100 text-red-800 border-red-200'
+    };
+    return <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${colorMap[text] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>{text}</span>;
+  };
+
+  // Get category info for badges
+  const getCategoryInfo = (categoryName) => {
+    return categories.find(c => c.name === categoryName) || { icon: '📄', color: 'bg-gray-100 text-gray-700' };
+  };
+
+  // Format number with commas for thousands
+  const formatNumber = (num) => {
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // Handle file change for receipt upload in modal
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setSelectedFile(file);
+    // Could update formData with receipt file if needed
+  };
+
+  // Handle upload profile image
   const handleUpload = async () => {
     if (!selectedFile) return alert("Please select a file first.");
     const token = localStorage.getItem("jwtToken");
-    const formData = new FormData();
-    formData.append("imageFile", selectedFile);
+    const formDataUpload = new FormData();
+    formDataUpload.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formDataUpload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -127,12 +135,13 @@ export default function ExpensesPage() {
       });
       alert("Profile image updated!");
       fetchUserProfile();
-      closeChangeImageDialog();
+      setIsChangeImageDialogOpen(false);
     } catch (error) {
       alert("Upload failed: " + (error.response?.data?.message || error.message));
     }
   };
 
+  // Handle change password
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmNewPassword) {
       alert("All fields are required.");
@@ -145,7 +154,7 @@ export default function ExpensesPage() {
     const token = localStorage.getItem("jwtToken");
 
     if (!token) {
-      setError("Authentication token not found.");
+      alert("Authentication token not found.");
       return;
     }
 
@@ -161,12 +170,16 @@ export default function ExpensesPage() {
         },
       });
       alert("Password changed successfully!");
-      closeChangePasswordDialog();
+      setIsChangePasswordDialogOpen(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
     } catch (error) {
       alert("Error: " + (error.response?.data?.message || error.message));
     }
   };
 
+  // Fetch user profile image
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("jwtToken");
 
@@ -181,108 +194,194 @@ export default function ExpensesPage() {
     }
   };
 
+  // Handle sign out
   const handleSignOut = () => {
     localStorage.clear();
     window.location.replace("/InvoiceAPI_LandingPage/login");
   };
 
-  // Reset forms
-  const resetForms = () => {
-    setExpenseFormData({
-      date: '',
-      category: '',
-      amount: '',
-      status: 'pending',
-      description: '',
-      receiptFile: null,
-    });
-    setMileageFormData({
-      date: '',
-      startLocation: '',
-      endLocation: '',
-      distance: '',
-      ratePerKm: 2.50,
-      calculatedCost: 0,
-      purpose: '',
-    });
+  // Handle status update
+  const handleStatusUpdate = (expenseId, newStatus) => {
+    setExpenses(prevExpenses =>
+      prevExpenses.map(expense =>
+        expense.expenseId === expenseId
+          ? { ...expense, expenseStatus: newStatus }
+          : expense
+      )
+    );
   };
 
-  // Tab switching handler
-  const switchTab = (tab) => {
-    setCurrentTab(tab);
-    resetForms();
-    setSelectedExpense(null);
-  };
-
-  // Calculate mileage cost
-  useEffect(() => {
-    const distance = parseFloat(mileageFormData.distance) || 0;
-    const rate = parseFloat(mileageFormData.ratePerKm) || 0;
-    const cost = distance * rate;
-    setMileageFormData(prev => ({ ...prev, calculatedCost: cost.toFixed(2) }));
-  }, [mileageFormData.distance, mileageFormData.ratePerKm]);
-
-  // Save record handler
-  const saveRecord = () => {
-    if (currentTab === 'expenses') {
-      const { date, category, amount } = expenseFormData;
-      if (!date || !category || !amount) {
-        alert('Please fill in all required fields');
-        return;
-      }
-      alert('Expense saved successfully!');
-    } else {
-      const { date, startLocation, endLocation, distance, purpose } = mileageFormData;
-      if (!date || !startLocation || !endLocation || !distance || !purpose) {
-        alert('Please fill in all required fields');
-        return;
-      }
-      alert('Mileage entry saved successfully!');
+  // Handle save expense
+  const saveExpense = async () => {
+    if (!formData.date || !formData.category || !formData.amount || !formData.description || !formData.merchant || !formData.paymentMethod) {
+      alert("Please fill in all required fields.");
+      return;
     }
-    closeModal();
+
+    const token = localStorage.getItem("jwtToken");
+    const apiKey = localStorage.getItem("apiKey");
+    if (!token) {
+      alert("Authentication token not found.");
+      return;
+    }
+
+    const expenseData = {
+      date: formData.date,
+      categoryId: formData.category,
+      amount: parseFloat(formData.amount),
+      description: formData.description,
+      merchant: formData.merchant,
+      paymentMethod: formData.paymentMethod,
+    };
+
+    try {
+      if (selectedFile) {
+        // Use FormData for file upload
+        const formDataUpload = new FormData();
+        formDataUpload.append("date", expenseData.date);
+        formDataUpload.append("categoryId", expenseData.categoryId);
+        formDataUpload.append("amount", expenseData.amount);
+        formDataUpload.append("description", expenseData.description);
+        formDataUpload.append("merchant", expenseData.merchant);
+        formDataUpload.append("paymentMethod", expenseData.paymentMethod);
+        formDataUpload.append("receiptFile", selectedFile); // Assuming API expects "receipt" as key
+
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/Expense`, formDataUpload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+            "X-API-KEY": apiKey,
+          },
+        });
+      } else {
+        // JSON payload
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/Expense`, expenseData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+        });
+      }
+      //console.log(typeof formData.category, formData.category);
+      alert("Expense saved successfully!");
+      setShowExpenseModal(false);
+      setFormData({
+        date: '',
+        category: '',
+        amount: '',
+        description: '',
+        merchant: '',
+        paymentMethod: '',
+        project: '',
+        receiptNumber: '',
+        taxAmount: '',
+        tags: []
+      });
+      setSelectedFile(null);
+      // Refetch expenses to update the list
+      const fetchExpenses = async () => {
+        try {
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Expense/by-user`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setExpenses(res.data);
+        } catch (err) {
+          console.error("Error refetching expenses", err);
+        }
+      };
+      fetchExpenses();
+    } catch (error) {
+      alert("Failed to save expense: " + (error.response?.data?.message || error.message));
+    }
   };
-
-  // Filtered expenses and mileage data (static for now)
-  const expensesData = [
-    { id: 'EXP-001234', date: '15/09/2025', category: 'Office Supplies', amount: 'GH₵245.50', status: 'Pending', description: 'Printer ink and paper' },
-    { id: 'EXP-001233', date: '14/09/2025', category: 'Travel', amount: 'GH₵1,250.00', status: 'Approved', description: 'Flight to Kumasi for client meeting' },
-    { id: 'EXP-001232', date: '13/09/2025', category: 'Utilities', amount: 'GH₵850.75', status: 'Approved', description: 'Office electricity bill' },
-    { id: 'EXP-001231', date: '12/09/2025', category: 'Meals & Entertainment', amount: 'GH₵425.00', status: 'Rejected', description: 'Client lunch meeting' },
-  ];
-
-  const mileageData = [
-    { id: 'MIL-001125', date: '15/09/2025', from: 'Accra', to: 'Tema', distance: 25.5, rate: 'GH₵2.50', totalCost: 'GH₵63.75', purpose: 'Client visit' },
-    { id: 'MIL-001124', date: '14/09/2025', from: 'Accra', to: 'Kumasi', distance: 270.0, rate: 'GH₵2.50', totalCost: 'GH₵675.00', purpose: 'Business meeting' },
-  ];
-
-  // Filter rows based on search term
-  const filteredExpenses = expensesData.filter(exp =>
-    exp.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredMileage = mileageData.filter(mil =>
-    mil.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   useApiInterceptor();
+
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      const token = localStorage.getItem("jwtToken");
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Expense/by-user`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setExpenses(res.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExpenses();
+  }, []);
+
+  const fetchExpenseCategories = async () => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return;
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/ExpenseCategory/active`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setExpenseCategories(res.data);
+    } catch (err) {
+      console.error("Error fetching expense categories", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenseCategories();
+    fetchUserProfile();
+  }, []);
+
+  // Calculate stats from expenses data
+  useEffect(() => {
+    if (expenses.length > 0) {
+      const totalExpenses = expenses.length;
+      const pendingApproval = expenses.filter(exp => exp.expenseStatus === 1).length;
+      const totalAmount = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const thisMonthAmount = expenses
+        .filter(exp => {
+          const expDate = new Date(exp.date);
+          return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+        })
+        .reduce((sum, exp) => sum + exp.amount, 0);
+
+      setStats({
+        totalExpenses,
+        pendingApproval,
+        totalAmount,
+        thisMonthAmount,
+        totalExpensesPercentage: 0, // Placeholder, no historical data
+        thisMonthPercentage: 0, // Placeholder, no historical data
+      });
+    }
+  }, [expenses]);
 
   return (
     <DashboardLayout
       profileImageUrl={profileImageUrl}
-      openModal={openModal}
-      isModalOpen={isModalOpen}
-      closeModal={closeModal}
+      openModal={() => setShowModal(true)}
+      isModalOpen={showModal}
+      closeModal={() => setShowModal(false)}
       handleSignOut={handleSignOut}
-      toggleSidebar={toggleSidebar}
-      isSidebarOpen={isSidebarOpen}
+      toggleSidebar={() => {}}
+      isSidebarOpen={true}
       dialogProps={{
-        openChangeImageDialog,
-        openChangePasswordDialog,
+        openChangeImageDialog: () => setIsChangeImageDialogOpen(true),
+        openChangePasswordDialog: () => setIsChangePasswordDialogOpen(true),
         isChangeImageDialogOpen,
-        closeChangeImageDialog,
+        closeChangeImageDialog: () => setIsChangeImageDialogOpen(false),
         handleFileChange,
         handleUpload,
         isChangePasswordDialogOpen,
-        closeChangePasswordDialog,
+        closeChangePasswordDialog: () => {
+          setIsChangePasswordDialogOpen(false);
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmNewPassword("");
+        },
         currentPassword,
         newPassword,
         confirmNewPassword,
@@ -292,591 +391,456 @@ export default function ExpensesPage() {
         handleChangePassword,
       }}
     >
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-8 py-6">
+          <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">Expense Management</h1>
-              <p className="text-gray-600">Track and manage your expenses and mileage efficiently</p>
+              <h1 className="text-3xl font-bold text-gray-900">Expense Management</h1>
+              <p className="text-gray-500 mt-1">Track and manage your expenses efficiently</p>
             </div>
-
-            {/* Country Selector */}
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Country:</label>
-              <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-1 text-sm bg-gray-50">
-                <span className="text-xl">{getFlagEmoji(countryCode)}</span>
-                <span>{country}</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">Country:</span>
+                <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {success && <p className="text-green-600 mb-4">{success}</p>}
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+        {/* Stats Cards */}
+        <div className="px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm font-medium">Total Expenses</span>
+                <Receipt className="w-5 h-5 text-gray-400" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">{stats.totalExpenses}</div>
+              <div className="flex items-center mt-2 text-xs text-green-600">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                <span>{stats.totalExpensesPercentage}% from last month</span>
+              </div>
+            </div>
 
-        {/* Notification */}
-        {notification && (
-          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
-            notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-          } text-white`}>
-            {notification.message}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm font-medium">Pending Approval</span>
+                <Clock className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">{stats.pendingApproval}</div>
+              <div className="flex items-center mt-2 text-xs text-gray-500">
+                <span>Awaiting review</span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm font-medium">Total Amount</span>
+                <TrendingUp className="w-5 h-5 text-gray-400" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">GH₵{formatNumber(stats.totalAmount)}</div>
+              <div className="flex items-center mt-2 text-xs text-gray-500">
+                <span>All time</span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm font-medium">This Month</span>
+                <Calendar className="w-5 h-5 text-gray-400" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900">GH₵{formatNumber(stats.thisMonthAmount)}</div>
+              <div className="flex items-center mt-2 text-xs text-red-600">
+                <TrendingDown className="w-3 h-3 mr-1" />
+                <span>{stats.thisMonthPercentage}% from last month</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="px-8 pb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            {/* Toolbar */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                <div className="flex gap-2">
+                  {/* <button
+                    onClick={() => setActiveTab('expenses')}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      activeTab === 'expenses'
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Expenses
+                  </button> */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by ID, description, merchant..."
+                      className="w-full lg:w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 w-full lg:w-auto">
+                  <button
+                    onClick={() => setFilterOpen(!filterOpen)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap cursor-pointer"
+                  >
+                    <Filter className="w-4 h-4" />
+                    <span className="hidden sm:inline">Filters</span>
+                  </button>
+                  
+                  <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 cursor-pointer">
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowExpenseModal(true)}
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2 whitespace-nowrap font-medium cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 cursor-pointer" />
+                    Create Expense
+                  </button>
+                </div>
+              </div>
+
+              {/* Filter Panel */}
+              {filterOpen && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option>Last 30 days</option>
+                        <option>Last 3 months</option>
+                        <option>Last 6 months</option>
+                        <option>Custom range</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option>All Statuses</option>
+                        <option>Pending</option>
+                        <option>Approved</option>
+                        <option>Rejected</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option>All Categories</option>
+                        {categories.map(cat => (
+                          <option key={cat.name}>{cat.icon} {cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option>All Methods</option>
+                        <option>Mobile Money</option>
+                        <option>Credit Card</option>
+                        <option>Cash</option>
+                        <option>Bank Transfer</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900">
+                      Expense ID
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900">
+                      Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900">
+                      Category
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900">
+                      Amount
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Merchant
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Payment
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="10" className="px-6 py-4 text-center text-gray-500">Loading expenses...</td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="10" className="px-6 py-4 text-center text-red-500">Error: {error}</td>
+                    </tr>
+                  ) : expenses.length === 0 ? (
+                    <tr>
+                      <td colSpan="10" className="px-6 py-4 text-center text-gray-500">No expenses found.</td>
+                    </tr>
+                  ) : (
+                    expenses.map((expense) => {
+                      const category = expenseCategories.find(c => c.id === expense.categoryId);
+                      const categoryName = category ? category.name : expense.categoryId;
+                      const categoryInfo = getCategoryInfo(categoryName);
+                      return (
+                        <tr key={expense.expenseId} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <input type="checkbox" className="rounded border-gray-300" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-medium text-gray-900">{expense.expenseId}</span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{new Date(expense.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}>
+                              <span>{categoryInfo.icon}</span>
+                              <span>{categoryName}</span>
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-semibold text-gray-900">GH₵{expense.amount.toFixed(2)}</span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{expense.description}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{expense.merchant}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{expense.paymentMethod}</td>
+                          <td className="px-6 py-4">
+                            {getStatusElement(expense.expenseStatus)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded transition-colors"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedExpense(expense);
+                                  setShowViewExpenseModal(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                title="Approve"
+                                onClick={() => {
+                                  setSelectedExpenseForApproval(expense);
+                                  setShowApproveExpenseModal(true);
+                                }}
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              {/* <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Reject">
+                                <XCircle className="w-4 h-4" />
+                              </button> */}
+                              <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <span className="text-sm text-gray-600">Showing 1 to 4 of 47 expenses</span>
+              <div className="flex gap-2">
+                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer">Previous</button>
+                <button className="px-3 py-1 bg-teal-600 text-white rounded text-sm">1</button>
+                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">2</button>
+                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">3</button>
+                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Create Expense Modal */}
+        {showExpenseModal && (
+<div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Create Expense Entry</h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500"  onClick={() => setShowExpenseModal(false)} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                    <input
+                      type="date"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      value={formData.date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-teal-600 hover:text-teal-800 cursor-pointer mb-1" onClick={() => setShowCategoryModal(true)}>Add new Expense category</p>
+                    {/* <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label> */}
+                    <select
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      value={formData.category}
+                      onChange={(e) => setFormData(prev => ({ ...prev, category: Number (e.target.value) }))}
+                    >
+                      <option value="">Select category</option>
+                      {expenseCategories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount (GH₵) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      value={formData.amount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      placeholder="Enter details..."
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Merchant *</label>
+                    <input
+                      type="text"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      placeholder="e.g., Melcom"
+                      value={formData.merchant}
+                      onChange={(e) => setFormData(prev => ({ ...prev, merchant: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
+                    <select
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      value={formData.paymentMethod}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                    >
+                      <option value="">Select payment method</option>
+                      <option value="Mobile Money">Mobile Money</option>
+                      <option value="Credit Card">Credit Card</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Receipt</label>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+                  <button
+                    onClick={() => setShowExpenseModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveExpense}
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors cursor-pointer"
+                  >
+                    Save Expense
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Expenses</h3>
-            <div className="text-3xl font-bold text-gray-900">47</div>
-          </div>
+        <AddCategoryModal
+          isOpen={showCategoryModal}
+          onClose={() => setShowCategoryModal(false)}
+          onSaved={fetchExpenseCategories}
+        />
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Pending Approval</h3>
-            <div className="text-3xl font-bold text-gray-900">12</div>
-          </div>
+        {showViewExpenseModal && (
+          <ViewExpense
+            isOpen={showViewExpenseModal}
+            expense={selectedExpense}
+            onClose={() => setShowViewExpenseModal(false)}
+            expenseCategories={expenseCategories}
+            getStatusElement={getStatusElement}
+          />
+        )}
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Amount</h3>
-            <div className="text-3xl font-bold text-gray-900">GH₵189,420.50</div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">This Month</h3>
-            <div className="text-3xl font-bold text-gray-900">GH₵3,847.20</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Expense List */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="p-6 border-b">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                {/* Search Input */}
-                <div className="flex-1">
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="Search expense by ID..."
-                  id="searchInput"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                </div>
-
-                {/* Tab Buttons */}
-                <div className="tab-buttons flex space-x-2 mt-4 md:mt-0">
-                  <button
-                    className={`tab-btn px-4 py-2 rounded ${currentTab === 'expenses' ? 'bg-teal-500 text-white' : 'bg-gray-200'}`}
-                    onClick={() => switchTab('expenses')}
-                    id="expensesTab"
-                  >
-                    Expenses
-                  </button>
-                  <button
-                    className={`tab-btn px-4 py-2 rounded ${currentTab === 'mileage' ? 'bg-teal-500 text-white' : 'bg-gray-200'}`}
-                    onClick={() => switchTab('mileage')}
-                    id="mileageTab"
-                  >
-                    Mileage
-                  </button>
-                </div>
-
-                <button
-                  className="create-btn bg-teal-600 text-white px-4 py-2 rounded mt-4 md:mt-0"
-                  onClick={() => setIsCreating(true)}
-                >
-                  + Create {currentTab === 'expenses' ? 'Expense' : 'Mileage'}
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              {loading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto"></div>
-                  <p className="text-gray-500 mt-2">Loading...</p>
-                </div>
-              ) : currentTab === 'expenses' && filteredExpenses.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No Expenses found. Create your first expense!
-                </div>
-              ) : currentTab === 'mileage' && filteredMileage.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No Mileage entries found. Create your first mileage entry!
-                </div>
-              ) : (
-                <table className="w-full ">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      {currentTab === 'expenses' ? (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expense ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </>
-                      ) : (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mileage ID</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
-                         
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentTab === 'expenses'
-                      ? filteredExpenses.map((exp) => (
-                          <tr key={exp.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exp.id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exp.date}</td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exp.amount}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              <span
-                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  exp.status.toLowerCase() === 'pending'
-                                    ? 'status-pending'
-                                    : exp.status.toLowerCase() === 'approved'
-                                    ? 'status-approved'
-                                    : 'status-rejected'
-                                }`}
-                              >
-                                {exp.status}
-                              </span>
-                            </td>
-                            <td>{exp.description}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            <Download size={16} />
-                          </button>
-                          <button
-                            onClick
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                          </tr>
-                        ))
-                      : filteredMileage.map((mil) => (
-                          <tr key={mil.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.date}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.from}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.to}</td>
-                            
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.totalCost}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mil.purpose}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            <Download size={16} />
-                          </button>
-                          <button
-                            onClick
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-          {/* Right Column - Detail / Expense and Mileage Form */}
-          <div className="bg-white rounded-lg shadow-sm ">
-
-            {(isCreating || selectedExpense) && (
-              
-              <div className="p-6 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {isCreating
-                    ? `Create ${currentTab === "expenses" ? "Expense" : "Mileage"} Entry`
-                    : `${currentTab === "expenses" ? "Expense" : "Mileage"} Details`}
-                </h2>
-                <button
-                  onClick={() => {
-                    setIsCreating(false);
-                    setSelectedExpense(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            
-            )}
-
-{isCreating ? (
-              <div className="p-6">
-                <div className="space-y-4">
-                  {currentTab === "expenses" ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium">Date *</label>
-                        <input
-                          type="date"
-                          required
-                          className="w-full border rounded px-3 py-2"
-                          value={expenseFormData.date}
-                          onChange={(e) =>
-                            setExpenseFormData((prev) => ({
-                              ...prev,
-                              date: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium">Category *</label>
-                        <select
-                          required
-                          className="w-full border rounded px-3 py-2"
-                          value={expenseFormData.category}
-                          onChange={(e) =>
-                            setExpenseFormData((prev) => ({
-                              ...prev,
-                              category: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="">Select category</option>
-                          <option value="office-supplies">Office Supplies</option>
-                          <option value="travel">Travel</option>
-                          <option value="rent">Rent</option>
-                          <option value="utilities">Utilities</option>
-                          <option value="meals">Meals & Entertainment</option>
-                          <option value="equipment">Equipment</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium">Amount (GH₵) *</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          required
-                          className="w-full border rounded px-3 py-2"
-                          value={expenseFormData.amount}
-                          onChange={(e) =>
-                            setExpenseFormData((prev) => ({
-                              ...prev,
-                              amount: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium">Description</label>
-                        <textarea
-                          className="w-full border rounded px-3 py-2"
-                          placeholder="Enter details..."
-                          value={expenseFormData.description}
-                          onChange={(e) =>
-                            setExpenseFormData((prev) => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium">Upload Receipt</label>
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          className="w-full border rounded px-3 py-2"
-                          onChange={(e) =>
-                            setExpenseFormData((prev) => ({
-                              ...prev,
-                              receiptFile: e.target.files[0],
-                            }))
-                          }
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                        {/* Date */}
-                        <div>
-                          <label className="block text-sm font-medium">Date *</label>
-                          <input
-                            type="date"
-                            required
-                            className="w-full border rounded px-3 py-2"
-                            value={mileageFormData.date}
-                            onChange={(e) =>
-                              setMileageFormData((prev) => ({
-                                ...prev,
-                                date: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        {/* Start Location */}
-                        <div>
-                          <label className="block text-sm font-medium">Start Location *</label>
-                          <input
-                            type="text"
-                            placeholder="e.g., Accra"
-                            className="w-full border rounded px-3 py-2"
-                            value={mileageFormData.startLocation}
-                            onChange={(e) =>
-                              setMileageFormData((prev) => ({
-                                ...prev,
-                                startLocation: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        {/* End Location */}
-                        <div>
-                          <label className="block text-sm font-medium">End Location *</label>
-                          <input
-                            type="text"
-                            placeholder="e.g., Tema"
-                            className="w-full border rounded px-3 py-2"
-                            value={mileageFormData.endLocation}
-                            onChange={(e) =>
-                              setMileageFormData((prev) => ({
-                                ...prev,
-                                endLocation: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        {/* Distance */}
-                        <div>
-                          <label className="block text-sm font-medium">Distance (km) *</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            required
-                            className="w-full border rounded px-3 py-2"
-                            value={mileageFormData.distance}
-                            onChange={(e) =>
-                              setMileageFormData((prev) => ({
-                                ...prev,
-                                distance: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        {/* Rate Per Km */}
-                        <div>
-                          <label className="block text-sm font-medium">Rate per Km *</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            required
-                            className="w-full border rounded px-3 py-2"
-                            value={mileageFormData.ratePerKm}
-                            onChange={(e) =>
-                              setMileageFormData((prev) => ({
-                                ...prev,
-                                ratePerKm: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        {/* Purpose */}
-                        <div>
-                          <label className="block text-sm font-medium">Purpose</label>
-                          <textarea
-                            placeholder="e.g., Client meeting"
-                            className="w-full border rounded px-3 py-2"
-                            value={mileageFormData.purpose}
-                            onChange={(e) =>
-                              setMileageFormData((prev) => ({
-                                ...prev,
-                                purpose: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        {/* UserId (hidden or pre-filled if user is logged in) */}
-                        <input
-                          type="hidden"
-                          value={mileageFormData.userId}
-                          onChange={(e) =>
-                            setMileageFormData((prev) => ({
-                              ...prev,
-                              userId: e.target.value,
-                            }))
-                          }
-                        />
-
-                        {/* Auto-calculated Total Cost */}
-                        <div>
-                          <label className="block text-sm font-medium">Total Cost</label>
-                          <input
-                            type="text"
-                            readOnly
-                            className="w-full border rounded px-3 py-2 bg-gray-100"
-                            value={
-                              mileageFormData.distance && mileageFormData.ratePerKm
-                                ? (parseFloat(mileageFormData.distance) *
-                                    parseFloat(mileageFormData.ratePerKm)).toFixed(2)
-                                : "0.00"
-                            }
-                          />
-                        </div>
-                      </>
-                  )}
-
-                  {/* Footer buttons */}
-                  <div className="flex justify-end space-x-4 pt-4">
-                    <button
-                      className="px-4 py-2 rounded border bg-gray-100 hover:bg-gray-200"
-                      onClick={() => setIsCreating(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700"
-                      onClick={saveRecord}
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : selectedExpense ? (
-              selectedExpense.category ? (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">Expense Information</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Expense ID:</span>
-                          <span className="font-medium">{selectedExpense.id}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Date:</span>
-                          <span className="font-medium">{selectedExpense.date}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Category:</span>
-                          <span className="font-medium">{selectedExpense.category}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Amount:</span>
-                          <span className="font-medium">{selectedExpense.amount}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Status:</span>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            selectedExpense.status.toLowerCase() === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : selectedExpense.status.toLowerCase() === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {selectedExpense.status}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Description:</span>
-                          <div className="font-medium">{selectedExpense.description}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4">Mileage Information</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Mileage ID:</span>
-                          <span className="font-medium">{selectedExpense.id}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Date:</span>
-                          <span className="font-medium">{selectedExpense.date}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">From:</span>
-                          <span className="font-medium">{selectedExpense.from}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">To:</span>
-                          <span className="font-medium">{selectedExpense.to}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Distance:</span>
-                          <span className="font-medium">{selectedExpense.distance} km</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Rate:</span>
-                          <span className="font-medium">{selectedExpense.rate}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Total Cost:</span>
-                          <span className="font-medium">{selectedExpense.totalCost}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Purpose:</span>
-                          <div className="font-medium">{selectedExpense.purpose}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            ) : (
-              <div className="p-8 text-center text-gray-500">
-                Select a record from the left, or Create a new one.
-              </div>
-            )}
-          </div>
-        </div>
+        {showApproveExpenseModal && (
+          <ApproveExpense
+            isOpen={showApproveExpenseModal}
+            expense={selectedExpenseForApproval}
+            onClose={() => setShowApproveExpenseModal(false)}
+            onStatusUpdate={handleStatusUpdate}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
+
 }

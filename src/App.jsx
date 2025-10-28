@@ -18,6 +18,9 @@ import ExpensePage from './Expense';
 import RecurringInvoicePage from './RecurringInvoice';
 import TrackDelivery from './Trackdelivery';
 import SettingsPage from './SettingsPage';
+import TaxPage from './taxpage';
+import AuditPage from './AuditPage';
+import ReportPage from './ReportPage';
 
 
 
@@ -48,7 +51,9 @@ function App() {
           <Route path="/recurringInvoice" element={<RecurringInvoicePage  />} /> {/* Redirect all other paths to Home */}
           <Route path="/trackDelivery" element={<TrackDelivery />} /> 
           <Route path="/Settings" element={<SettingsPage />} /> {/* Redirect all other paths to Home */}
-          
+          <Route path="/Taxpage" element={<TaxPage />} /> {/* Redirect all other paths to Home */}
+          <Route path="/AuditPage" element={<AuditPage />} /> {/* Redirect all other paths to Home */}
+          <Route path="ReportPage" element={<ReportPage />} /> {/* Redirect all other paths to Home */}
         </Routes>
         
       </Router>

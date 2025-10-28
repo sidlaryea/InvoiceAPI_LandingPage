@@ -39,11 +39,11 @@ export default function Login() {
         const userId = decodedToken.userId; // or whatever field contains the user ID
         const country = decodedToken.CountryName;
         const countryCode=decodedToken.CountryCode;
-        const email=decodedToken.emailaddress;
+        const firstname=decodedToken.FirstName;
         localStorage.setItem("country",country)
         localStorage.setItem("countryCode",countryCode)
         localStorage.setItem("userId", userId);
-        localStorage.setItem("email",email);
+        localStorage.setItem("firstname",firstname);
         localStorage.setItem("token", token); // Store token for authenticated requests
         
         

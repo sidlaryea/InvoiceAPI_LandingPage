@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useCallback } from "react";
 import { Plus, Trash2, Download, Save, Eye, Edit3, X, MoveRight, Send } from "lucide-react";
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
@@ -18,86 +18,35 @@ export default function RecurringInvoicePage() {
     frequency: 1,
     dayOfWeek: '',
     dayOfMonth: '',
+    items: [{ productId: '', name: '', quantity: 1, unitPrice: 0, description: '' }],
     amount: 0,
     currency: 'GHS',
     tax: 0,
     notes: '',
+    totalTaxAmount: 0,
     isActive: true
   });
 
-  // Mock data for recurring invoices
-  const mockRecurringInvoices = [
-    {
-      id: 1,
-      invoiceNumber: 'REC-001',
-      customerId: '1',
-      customerName: 'John Doe',
-      customerEmail: 'john@example.com',
-      startDate: '2023-01-01',
-      endDate: null,
-      interval: 'Monthly',
-      frequency: 1,
-      dayOfMonth: 15,
-      amount: 500,
-      currency: 'GHS',
-      tax: 50,
-      totalAmount: 550,
-      isActive: true,
-      createdAt: '2023-01-01T00:00:00Z',
-      lastGeneratedAt: '2023-12-15T00:00:00Z',
-      notes: 'Monthly subscription'
-    },
-    {
-      id: 2,
-      invoiceNumber: 'REC-002',
-      customerId: '2',
-      customerName: 'Jane Smith',
-      customerEmail: 'jane@example.com',
-      startDate: '2023-02-01',
-      endDate: '2024-02-01',
-      interval: 'Weekly',
-      frequency: 2,
-      dayOfWeek: 'Monday',
-      amount: 200,
-      currency: 'USD',
-      tax: 20,
-      totalAmount: 220,
-      isActive: true,
-      createdAt: '2023-02-01T00:00:00Z',
-      lastGeneratedAt: '2023-12-18T00:00:00Z',
-      notes: 'Bi-weekly service'
-    },
-    {
-      id: 3,
-      invoiceNumber: 'REC-003',
-      customerId: '3',
-      customerName: 'Bob Johnson',
-      customerEmail: 'bob@example.com',
-      startDate: '2023-03-01',
-      endDate: null,
-      interval: 'Yearly',
-      frequency: 1,
-      amount: 1200,
-      currency: 'EUR',
-      tax: 120,
-      totalAmount: 1320,
-      isActive: false,
-      createdAt: '2023-03-01T00:00:00Z',
-      lastGeneratedAt: '2023-03-01T00:00:00Z',
-      notes: 'Annual maintenance'
-    }
-  ];
-
   ///////Function for Fetching the Recurring Invoices/////////
   const fetchRecurringInvoices = async () => {
-    // Mock fetch - in real app, this would call the API
-    setTimeout(() => {
-      setRecurringInvoices(mockRecurringInvoices);
-    }, 500); // Simulate loading
+    const token = localStorage.getItem("jwtToken");
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/RecurringInvoice/user`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRecurringInvoices(response.data);
+      console.log("Fetched recurring invoices:", response.data);
+    } catch (error) {
+      console.error("Error fetching recurring invoices:", error);
+      setError("Failed to fetch recurring invoices");
+    }
   };
+
+
 
   useEffect(() => {
     fetchRecurringInvoices();
+    fetchUserProfile();
   }, []);
 
   const showNotification = (message, type = 'success') => {
@@ -122,6 +71,19 @@ export default function RecurringInvoicePage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [notification, setNotification] = useState(null);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  // Set customer details from embedded customer object when invoice is selected
+  useEffect(() => {
+    if (selectedInvoice && selectedInvoice.customer) {
+      setSelectedInvoice(prev => ({
+        ...prev,
+        customerName: selectedInvoice.customer.fullName,
+        customerEmail: selectedInvoice.customer.email,
+        customerPhone: selectedInvoice.customer.phone,
+        customerAddress: selectedInvoice.customer.address
+      }));
+    }
+  }, [selectedInvoice?.id]);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -136,6 +98,7 @@ export default function RecurringInvoicePage() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
   //const [showSuccess, setShowSuccess] = useState(false);
+  const [taxComponents, setTaxComponents] = useState([]); // Holds list of tax items from DB 
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -233,14 +196,147 @@ export default function RecurringInvoicePage() {
     }
   };
 
+ // 🧭 Fetch taxes by country
   useEffect(() => {
-    fetchUserProfile();
-  }, []);
+    const fetchTaxesByCountry = async () => {
+      const country = localStorage.getItem("country");
+      if (!country) return;
+
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Tax/by-country/${country}`);
+        const data = await res.json();
+        console.log("Fetched taxes on load:", data);
+        setTaxComponents(data);
+      } catch (err) {
+        console.error("Error fetching tax components:", err);
+        setTaxComponents([]);
+      }
+    };
+
+    fetchTaxesByCountry();
+  }, [formData.country]);
+
+  // 💰 Subtotal
+  const calculateSubtotal = useCallback(() => {
+    return formData.items?.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0) || 0;
+  }, [formData.items]);
+
+  // 🎁 Discount
+  const calculateDiscount = useCallback(() => {
+    return (calculateSubtotal() * (formData.discountPercent ?? 0)) / 100;
+  }, [calculateSubtotal, formData.discountPercent]);
+
+  // 🧮 Tax for form
+  const calculateTax = useCallback(() => {
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    const discountedSubtotal = subtotal - discount;
+    const totalTaxRate = taxComponents.reduce((sum, tax) => sum + Number(tax.rate || 0), 0);
+    return (discountedSubtotal * totalTaxRate) / 100;
+  }, [calculateSubtotal, calculateDiscount, taxComponents]);
+
+  const calculateTaxForInvoice = useCallback((invoice) => {
+    if (!invoice) return 0;
+    const subtotal = Number(
+      invoice.subtotal ??
+        (invoice.items?.reduce((s, it) => s + (Number(it.unitPrice || 0) * Number(it.quantity || 0)), 0) ?? 0)
+    );
+    const discountPercent = Number(invoice.discountPercent ?? 0);
+    const discountedSubtotal = subtotal - (subtotal * discountPercent) / 100;
+    const totalTaxRate = taxComponents.reduce((sum, tax) => sum + Number(tax.rate || 0), 0);
+    return (discountedSubtotal * totalTaxRate) / 100;
+  }, [taxComponents]);
+
+  // 🧮 Total
+  const calculateTotal = useCallback(() => {
+    return calculateSubtotal() - calculateDiscount() + calculateTax();
+  }, [calculateSubtotal, calculateDiscount, calculateTax]);
+
+  // 💵 Currency formatter
+  const formatCurrency = (amount, currency) => {
+    try {
+      return new Intl.NumberFormat("en-GH", {
+        style: "currency",
+        currency: currency || "GHS",
+      }).format(amount);
+    } catch {
+      // Fallback to GHS if currency is invalid
+      return new Intl.NumberFormat("en-GH", {
+        style: "currency",
+        currency: "GHS",
+      }).format(amount);
+    }
+  };
+
+ 
 
   const handleSignOut = () => {
     localStorage.clear();
     window.location.replace("/InvoiceAPI_LandingPage/login");
   };
+
+
+  const fetchProducts = async (query) => {
+  if (!query) return [];
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Product/search?query=${encodeURIComponent(query)}`);
+    return await res.json(); // expected: array of { id, name, price, description }
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+};
+
+const mapInterval = (intervalString) => {
+  switch (intervalString.toLowerCase()) {
+    case "daily": return 0;
+    case "weekly": return 1;
+    case "monthly": return 2;
+    case "yearly": return 3;
+    default: return 2; // Monthly as default
+  }
+};
+
+const formatIntervalDisplay = (interval, frequency, dayOfWeek, dayOfMonth) => {
+  // Map integer interval to string if needed
+  const intervalMap = {
+    0: "Day",
+    1: "Week",
+    2: "Month",
+    3: "Year"
+  };
+  const intervalString = intervalMap[interval] || interval.toLowerCase();
+
+  const pluralMap = {
+    Day: "Days",
+    Week: "Weeks",
+    Month: "Months",
+    Year: "Years"
+  };
+
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  let display = "";
+
+  if (frequency === 1) {
+    display = `Every 1 ${intervalString}`;
+  } else {
+    display = `Every ${frequency} ${pluralMap[intervalString] || intervalString}`;
+  }
+
+  // Add day of week for weekly intervals
+  if (interval === 1 && dayOfWeek !== null && dayOfWeek !== undefined) {
+    display += ` On ${dayNames[dayOfWeek]}`;
+  }
+
+  // Add day of month for monthly intervals
+  if (interval === 2 && dayOfMonth) {
+    display += ` On Day ${dayOfMonth}`;
+  }
+
+  return display;
+};
 
   ////////Handle Form Submission////////////
   const handleSubmit = async (e) => {
@@ -249,20 +345,60 @@ export default function RecurringInvoicePage() {
     setError(null);
     setLoading(true);
 
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      setError("Authentication token not found.");
+      setLoading(false);
+      return;
+    }
+    const apiKey = localStorage.getItem("apiKey");
+
+
     try {
-      // Mock submission - in real app, this would call the API
-      const newInvoice = {
-        ...formData,
-        id: recurringInvoices.length + 1,
-        invoiceNumber: `REC-${String(recurringInvoices.length + 1).padStart(3, '0')}`,
-        totalAmount: formData.amount + formData.tax,
-        createdAt: new Date().toISOString(),
+      const intervalInt = mapInterval(formData.interval);
+      const mockInvoice = {
+        interval: intervalInt,
+        frequency: Number(formData.frequency),
+        dayOfWeek: formData.dayOfWeek || null,
+        dayOfMonth: formData.dayOfMonth || null,
+        startDate: formData.startDate,
         lastGeneratedAt: null
       };
+      const nextDate = getNextGenerationDateObject(mockInvoice);
+      const payload = {
+  customerId: Number(formData.customerId),
+  notes: formData.notes,
+  startDate: new Date(formData.startDate).toISOString(),
+  endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
+  nextGenerationDate: nextDate ? nextDate.toISOString() : new Date(formData.startDate).toISOString(),
+  currency: formData.currency,
+  taxComponentIds: taxComponents.map(tax => tax.id), // should be numeric IDs
+  interval: intervalInt, // helper function to convert string → int
+  frequency: Number(formData.frequency),
+  dayOfWeek: formData.dayOfWeek || null,
+  dayOfMonth: formData.dayOfMonth || null,
+  isActive: formData.isActive,
+  discountPercent: formData.discountPercent || 0,
+  items: formData.items.map(item => ({
+    productId: Number(item.productId),
+    name: item.name,
+    description: item.description,
+    quantity: Number(item.quantity),
+    unitPrice: Number(item.unitPrice)
+  }))
+};
 
-      setRecurringInvoices(prev => [newInvoice, ...prev]);
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/RecurringInvoice`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-api-key": apiKey,
+          "Content-Type": "application/json"
+        }
+      });
+        
       setSuccess("Recurring invoice created successfully!");
-
+      fetchRecurringInvoices(); // Refresh the list
+      console.log("Recurring invoice created with payload:", payload);
       // Reset form
       setFormData({
         customerId: '',
@@ -285,23 +421,37 @@ export default function RecurringInvoicePage() {
 
     } catch (error) {
       console.error("Error creating recurring invoice:", error);
-      alert("An error occurred while creating the recurring invoice");
+      setError(error.response?.data?.message || "An error occurred while creating the recurring invoice");
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateTotal = () => {
-    return formData.amount + formData.tax;
-  };
+const addItem = () => {
+  setFormData((prev) => ({
+    ...prev,
+    items: [...prev.items, { productId: '',name:'', quantity: 1, unitPrice: 0, description: '' }],
+  }));
+};
 
-  const formatCurrency = (amount, currency = 'GHS') => {
-    return new Intl.NumberFormat('en-GH', {
-      style: 'currency',
-      currency,
-    }).format(amount);
-  };
+const removeItem = (index) => {
+  setFormData((prev) => ({
+    ...prev,
+    items: prev.items.filter((_, i) => i !== index),
+  }));
+};
 
+const updateItem = (index, field, value) => {
+  setFormData((prev) => ({
+    ...prev,
+    items: prev.items.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ),
+  }));
+};
+
+
+ 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Indefinite';
     const date = new Date(dateStr);
@@ -312,28 +462,88 @@ export default function RecurringInvoicePage() {
     });
   };
 
-  const getNextGenerationDate = (invoice) => {
-    if (!invoice.lastGeneratedAt) return formatDate(invoice.startDate);
-    // Simple calculation - in real app, this would be more complex
-    const lastDate = new Date(invoice.lastGeneratedAt);
-    let nextDate = new Date(lastDate);
+  const getNextGenerationDateObject = (invoice) => {
+    try {
+      // Use startDate as the base if no lastGeneratedAt, otherwise use lastGeneratedAt
+      const baseDate = invoice.lastGeneratedAt ? new Date(invoice.lastGeneratedAt) : new Date(invoice.startDate);
+      if (isNaN(baseDate.getTime())) {
+        throw new Error('Invalid base date');
+      }
+      let nextDate = new Date(baseDate);
 
-    switch (invoice.interval) {
-      case 'Daily':
-        nextDate.setDate(lastDate.getDate() + invoice.frequency);
-        break;
-      case 'Weekly':
-        nextDate.setDate(lastDate.getDate() + (invoice.frequency * 7));
-        break;
-      case 'Monthly':
-        nextDate.setMonth(lastDate.getMonth() + invoice.frequency);
-        if (invoice.dayOfMonth) nextDate.setDate(invoice.dayOfMonth);
-        break;
-      case 'Yearly':
-        nextDate.setFullYear(lastDate.getFullYear() + invoice.frequency);
-        break;
+      switch (invoice.interval) {
+        case 0: // Daily
+        case 'Daily':
+          nextDate.setDate(baseDate.getDate() + invoice.frequency);
+          break;
+        case 1: // Weekly
+        case 'Weekly':
+          if (invoice.dayOfWeek !== null && invoice.dayOfWeek !== undefined) {
+            // Calculate next occurrence of the specified day of the week
+            const daysUntilTarget = (invoice.dayOfWeek - baseDate.getDay() + 7) % 7;
+            nextDate.setDate(baseDate.getDate() + daysUntilTarget);
+            // If the calculated date is not after baseDate, add another week
+            if (nextDate <= baseDate) {
+              nextDate.setDate(nextDate.getDate() + 7);
+            }
+            // Then add (frequency - 1) weeks
+            nextDate.setDate(nextDate.getDate() + (invoice.frequency - 1) * 7);
+          } else {
+            // Default to adding frequency * 7 days if no dayOfWeek specified
+            nextDate.setDate(baseDate.getDate() + (invoice.frequency * 7));
+          }
+          break;
+        case 2: // Monthly
+        case 'Monthly':
+          if (invoice.dayOfMonth) {
+            let targetDay = invoice.dayOfMonth;
+            let baseDay = baseDate.getDate();
+            let baseMonth = baseDate.getMonth();
+            let baseYear = baseDate.getFullYear();
+            let daysInBaseMonth = new Date(baseYear, baseMonth + 1, 0).getDate();
+            if (baseDay <= targetDay && targetDay <= daysInBaseMonth) {
+              nextDate.setDate(targetDay);
+            } else {
+              nextDate.setMonth(baseMonth + invoice.frequency);
+              if (isNaN(nextDate.getTime())) {
+                throw new Error('Invalid date calculation');
+              }
+              let daysInNewMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+              nextDate.setDate(Math.min(targetDay, daysInNewMonth));
+              if (isNaN(nextDate.getTime())) {
+                throw new Error('Invalid date calculation');
+              }
+            }
+          } else {
+            nextDate.setMonth(baseDate.getMonth() + invoice.frequency);
+            if (isNaN(nextDate.getTime())) {
+              throw new Error('Invalid date calculation');
+            }
+          }
+          break;
+        case 3: // Yearly
+        case 'Yearly':
+          nextDate.setFullYear(baseDate.getFullYear() + invoice.frequency);
+          break;
+        default:
+          // Fallback to daily
+          nextDate.setDate(baseDate.getDate() + invoice.frequency);
+      }
+
+      if (isNaN(nextDate.getTime())) {
+        throw new Error('Invalid calculated date');
+      }
+
+      return nextDate;
+    } catch (error) {
+      console.error('Error calculating next generation date:', error);
+      return null;
     }
+  };
 
+  const getNextGenerationDate = (invoice) => {
+    const nextDate = getNextGenerationDateObject(invoice);
+    if (!nextDate) return 'Invalid Date';
     return formatDate(nextDate.toISOString().split('T')[0]);
   };
 
@@ -425,16 +635,16 @@ export default function RecurringInvoicePage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Total Monthly Value</h3>
             <div className="text-3xl font-bold text-gray-900">
-              {formatCurrency(recurringInvoices.filter(inv => inv.isActive).reduce((sum, inv) => sum + inv.totalAmount, 0))}
+              {formatCurrency(recurringInvoices.filter(inv => inv.isActive).reduce((sum, inv) => sum + inv.balanceDue, 0))}
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Recurring Invoice List */}
-          <div className="bg-white rounded-lg shadow-sm">
+          <div className="bg-white rounded-lg shadow-sm ">
             <div className="p-6 border-b">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                 {/* Search Input */}
                 <div className="flex-1">
                   <input
@@ -479,9 +689,7 @@ export default function RecurringInvoicePage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Amount
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Interval
-                      </th>
+                      
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
@@ -500,14 +708,12 @@ export default function RecurringInvoicePage() {
                           {invoice.invoiceNumber}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {invoice.customerName}
+                          {invoice.customer.fullName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatCurrency(invoice.totalAmount, invoice.currency)}
+                          {formatCurrency(invoice.balanceDue, invoice.currency)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {invoice.frequency > 1 ? `Every ${invoice.frequency} ${invoice.interval}s` : `${invoice.interval}`}
-                        </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             invoice.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -628,6 +834,7 @@ export default function RecurringInvoicePage() {
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                        min={new Date().toISOString().split('T')[0]}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         required
                       />
@@ -641,6 +848,7 @@ export default function RecurringInvoicePage() {
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                        min={formData.startDate || new Date().toISOString().split('T')[0]}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
                     </div>
@@ -680,19 +888,24 @@ export default function RecurringInvoicePage() {
                           Day of Week
                         </label>
                         <select
-                          value={formData.dayOfWeek}
-                          onChange={(e) => setFormData(prev => ({ ...prev, dayOfWeek: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                        >
-                          <option value="">Select Day</option>
-                          <option value="Monday">Monday</option>
-                          <option value="Tuesday">Tuesday</option>
-                          <option value="Wednesday">Wednesday</option>
-                          <option value="Thursday">Thursday</option>
-                          <option value="Friday">Friday</option>
-                          <option value="Saturday">Saturday</option>
-                          <option value="Sunday">Sunday</option>
-                        </select>
+                              value={formData.dayOfWeek}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  dayOfWeek: e.target.value ? parseInt(e.target.value) : null,
+                                }))
+                              }
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            >
+                              <option value="">Select Day</option>
+                              <option value="0">Sunday</option>
+                              <option value="1">Monday</option>
+                              <option value="2">Tuesday</option>
+                              <option value="3">Wednesday</option>
+                              <option value="4">Thursday</option>
+                              <option value="5">Friday</option>
+                              <option value="6">Saturday</option>
+                            </select>
                       </div>
                     )}
 
@@ -712,32 +925,9 @@ export default function RecurringInvoicePage() {
                       </div>
                     )}
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Amount
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.amount}
-                        onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                        required
-                      />
-                    </div>
+                    
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tax
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.tax}
-                        onChange={(e) => setFormData(prev => ({ ...prev, tax: parseFloat(e.target.value) || 0 }))}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      />
-                    </div>
+                    
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -753,34 +943,149 @@ export default function RecurringInvoicePage() {
                         <option value="EUR">EUR</option>
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount %
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={formData.discountPercent}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          discountPercent: parseFloat(e.target.value) || 0
+                        }))}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    </div>
                   </div>
 
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes
-                    </label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      rows="3"
-                    />
-                  </div>
-
+                  
+                    <div className="mb-6">
+                      <div className="flex items-center mb-4">
+                        <div className="flex-grow text-center">
+                          <h3 className="text-lg font-medium text-gray-900"><b>Add Invoice Items</b></h3>
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={addItem}
+                            className="text-teal-600 hover:text-teal-700 flex items-center gap-1"
+                          >
+                            <Plus size={16} />
+                            Add Item
+                          </button>
+                        </div>
+                      </div>
+                    
+                      {formData.items.map((item, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-md">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Item/Product
+                            </label>
+                            <AutocompleteSearch
+                                placeholder="Search product by name or ID"
+                                value={item?.product || null}
+                                fetchData={fetchProducts}
+                                getOptionLabel={(product) => `${product.name}`}
+                                onSelect={(product) => {
+                                  updateItem(index, "product", product);
+                                  updateItem(index, "productId", product.id);
+                                  updateItem(index, "name", product.name);
+                                  updateItem(index, "description", product.description);
+                                  updateItem(index, "unitPrice", product.price);
+                                }}
+                              />
+                    
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                              min="1"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Unit Price
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.unitPrice}
+                              onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                              required
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="text-red-600 hover:text-red-700 p-2"
+                              disabled={formData.items.length === 1}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                          <div className="md:col-span-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Description
+                            </label>
+                            <textarea
+                              value={item.description}
+                              onChange={(e) => updateItem(index, 'description', e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                              rows="2"
+                              required
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  
                   <div className="mb-6 p-4 bg-gray-50 rounded-md">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Amount:</span>
-                      <span className="font-medium">{formatCurrency(formData.amount, formData.currency)}</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Tax:</span>
-                      <span className="font-medium">{formatCurrency(formData.tax, formData.currency)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-lg font-bold">
-                      <span>Total:</span>
-                      <span>{formatCurrency(calculateTotal(), formData.currency)}</span>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Subtotal:</span>
+                    <span className="font-medium">{formatCurrency(calculateSubtotal(), formData.currency)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-600">Discount ({formData.discountPercent ?? 0}%):</span>
+                  <span className="font-medium">
+                    -{formatCurrency((calculateSubtotal() * (formData.discountPercent ?? 0)) / 100, formData.currency)}
+                  </span>
+                </div>
+
+
+
+                  <div className="mb-2">
+                    {taxComponents.map((tax) => (
+                      <div key={tax.id} className="flex justify-between text-sm text-gray-600">
+                        <span>{tax.name} ({tax.rate}%):</span>
+                        <span>{formatCurrency(((calculateSubtotal() - calculateDiscount()) * tax.rate) / 100, formData.currency)}</span>
+                      </div>
+                    ))}
+
+                    
+
+                    <div className="flex justify-between font-medium mt-1">
+                      <span>Total Tax ({taxComponents.reduce((sum, t) => sum + t.rate, 0)}%):</span>
+                      <span>{formatCurrency(calculateTax(), formData.currency)}</span>
                     </div>
                   </div>
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Total:</span>
+                    <span>{formatCurrency(calculateTotal(), formData.currency)}</span>
+                  </div>
+                </div>
 
                   <div className="flex gap-4">
                     <button
@@ -848,7 +1153,7 @@ export default function RecurringInvoicePage() {
                         <div className="flex justify-between">
                           <span className="text-gray-600">Interval:</span>
                           <span className="font-medium">
-                            {selectedInvoice.frequency > 1 ? `Every ${selectedInvoice.frequency} ${selectedInvoice.interval}s` : `${selectedInvoice.interval}`}
+                            {formatIntervalDisplay(selectedInvoice.interval, selectedInvoice.frequency, selectedInvoice.dayOfWeek, selectedInvoice.dayOfMonth)}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -864,9 +1169,19 @@ export default function RecurringInvoicePage() {
                           <span className="font-medium">{getNextGenerationDate(selectedInvoice)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Total Amount:</span>
-                          <span className="font-medium">{formatCurrency(selectedInvoice.totalAmount, selectedInvoice.currency)}</span>
-                        </div>
+                        <span className="text-gray-600">Balance Due:</span>
+                        <span className="font-medium">{formatCurrency(selectedInvoice.balanceDue, selectedInvoice.currency)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Amount Paid:</span>
+                        <span className="font-medium">{formatCurrency(selectedInvoice.amountPaid, selectedInvoice.currency)}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Amount:</span>
+                        <span className="font-medium">{formatCurrency(selectedInvoice.total, selectedInvoice.currency)}</span>
+                      </div>
                       </div>
                     </div>
 
@@ -882,14 +1197,101 @@ export default function RecurringInvoicePage() {
                           <div className="font-medium">{selectedInvoice.customerEmail}</div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Notes:</span>
-                          <div className="font-medium">{selectedInvoice.notes || 'No notes'}</div>
-                        </div>
+                        <span className="text-gray-600">Phone:</span>
+                        <div className="font-medium">{selectedInvoice.customerPhone}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Address:</span>
+                        <div className="font-medium">{selectedInvoice.customerAddress}</div>
+                      </div>
                       </div>
                     </div>
                   </div>
+<div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Invoice Items</h3>
+                  <table className="w-full border border-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Item
+                        </th>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Description   
+                        </th>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Quantity
+                        </th> 
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Unit Price
+                        </th>
+                        <th className="px-4 py-2 border-b border-gray-200 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          Total 
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedInvoice.items.map((item) => (  
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {item.name}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {item.description}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {formatCurrency(item.unitPrice, selectedInvoice.currency)}
+                          </td>
+                          <td className="px-4 py-2 border-b border-gray-200 text-sm text-gray-900">
+                            {formatCurrency(item.unitPrice * item.quantity, selectedInvoice.currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+
+                <div className="mb-6 p-4 bg-gray-50 rounded-md">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Subtotal:</span>
+                    <span className="font-medium">{formatCurrency(selectedInvoice.subtotal, selectedInvoice.currency)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Discount ({selectedInvoice.discountPercent ?? 0}%):</span>
+                    <span className="font-medium">
+                      -{formatCurrency((selectedInvoice.subtotal * (selectedInvoice.discountPercent ?? 0)) / 100, selectedInvoice.currency)}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+  {taxComponents.map((tax) => (
+    <div key={tax.id} className="flex justify-between text-sm text-gray-600">
+      <span>{tax.name} ({tax.rate}%):</span>
+      <span>
+        {formatCurrency(((selectedInvoice.subtotal - (selectedInvoice.subtotal * (selectedInvoice.discountPercent ?? 0)) / 100) * tax.rate) / 100, selectedInvoice.currency)}
+      </span>
+    </div>
+  ))}
+
+
+  <div className="flex justify-between font-medium mt-1">
+    <span>
+      Total Tax  ({taxComponents.reduce((sum, t) => sum + Number(t.rate), 0)}%):
+    </span>
+    <span>
+       {formatCurrency(calculateTaxForInvoice(selectedInvoice), selectedInvoice?.currency || formData.currency)}
+    </span>
+  </div>
+</div>
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Total:</span>
+                    <span>{formatCurrency(selectedInvoice.total, selectedInvoice.currency)}</span>
+                  </div>
                 </div>
               </div>
+            </div>
             ) : (
               <div className="p-8 text-center text-gray-500">
                 Select a recurring invoice to view details or create a new one

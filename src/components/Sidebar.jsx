@@ -1,7 +1,5 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
 import axios from "axios";
 import {
   LayoutDashboard,
@@ -27,20 +25,43 @@ import {
 
 
 
-export default function Sidebar({ isSidebarOpen,currentPlan }) {
-  const [userProfile, setUserProfile] = React.useState({ firstName: "User" });
-
+export default function Sidebar({ isSidebarOpen }) {
+  const [userProfile, setUserProfile] = useState({ firstName: "User" });
   const [showModal, setShowModal] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState("free"); // <-- use state for plan
 
-const handleClick = (e) => {
-    if (currentPlan !== "Enterprise") {
-      e.preventDefault(); // stop navigation
-      setShowModal(true);
+  const fetchApiKeyDetails = async (token) => {
+    try {
+      const apiRes = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/ApiKey`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (apiRes.status === 200) {
+        const { plan } = apiRes.data;
+        setCurrentPlan(plan); // <-- update state
+        localStorage.setItem("currentPlan", plan);
+      }
+    } catch (error) {
+      console.error("Failed to fetch API key:", error);
     }
-  };
+  }; 
+
+  
+  const handleClick = (e) => {
+      // Use currentPlan from state
+      if (currentPlan !== "Pro" ) {
+        e.preventDefault(); // stop navigation
+        setShowModal(true);
+      }
+    };
 
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("jwtToken");
       try {
@@ -59,6 +80,8 @@ const handleClick = (e) => {
             firstName: firstName || 'User'
           });
         }
+        // Fetch API key and plan
+        await fetchApiKeyDetails(token);
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
       }
@@ -82,9 +105,9 @@ const handleClick = (e) => {
   <Users size={18} /> Customer Registration
 </Link>
 
-<Link to={currentPlan === "Enterprise" ? "/expense" : "#"}  className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+<Link to={currentPlan === "Pro" ? "/expense" : "#"}  className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
   <FileText size={18} /> Record Expenses{" "}
-        {currentPlan !== "Enterprise" && (
+        {currentPlan == "Free" && (
           <Lock size={14} className="ml-auto opacity-60" />
         )}
 </Link>
@@ -123,20 +146,26 @@ const handleClick = (e) => {
   <FileText size={18} /> Generate Invoice
 </Link>
 
-<Link to={currentPlan === "Enterprise" ? "/recurringInvoice" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
-  <Repeat size={18} />  Recurring Invoices <Lock size={14} className="ml-auto opacity-60" />
+<Link to={currentPlan === "Pro" ? "/recurringInvoice" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+  <Repeat size={18} />  Recurring Invoices {currentPlan == "Free" && (
+          <Lock size={14} className="ml-auto opacity-60" />
+        )}
 </Link>
 
 <Link to="/payment" className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded">
   <CreditCard size={18} /> Payments
 </Link>
 
-<Link to={currentPlan === "Enterprise" ? "/trackDelivery" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
-  <Bike size={18} /> Track Deliveries <Lock size={14} className="ml-auto opacity-60" />
+<Link to={currentPlan === "Pro" ? "/trackDelivery" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+  <Bike size={18} /> Track Deliveries {currentPlan == "Free" && (
+          <Lock size={14} className="ml-auto opacity-60" />
+        )}
 </Link>
 
-<Link to={currentPlan === "Enterprise" ? "/reports" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
-  <BarChart3 size={18} /> Reports <Lock size={14} className="ml-auto opacity-60" />
+<Link to={currentPlan === "Pro" ? "/reportpage" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+  <BarChart3 size={18} /> Reports {currentPlan == "Free" && (
+          <Lock size={14} className="ml-auto opacity-60" />
+        )}
 </Link>
 
 <Link to="/Settings" className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded">
@@ -149,16 +178,22 @@ const handleClick = (e) => {
   <Package size={18} /> Products & Items
 </Link>
 
-<Link to={currentPlan === "Enterprise" ? "#" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
-  <Percent size={18} /> Tax Rates <Lock size={14} className="ml-auto opacity-60" />
+<Link to={currentPlan === "Pro" ? "/taxpage" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+  <Percent size={18} /> Tax Rates {currentPlan == "Free" && (
+          <Lock size={14} className="ml-auto opacity-60" />
+        )}
 </Link>
 
-<Link to={currentPlan === "Enterprise" ? "#" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
-  <CircleDollarSign size={18} /> Currency Management <Lock size={14} className="ml-auto opacity-60" />
-</Link>
+{/* <Link to={currentPlan === "Enterprise" ? "#" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+  <CircleDollarSign size={18} /> Currency Management {currentPlan == "Free" && (
+          <Lock size={14} className="ml-auto opacity-60" />
+        )}
+</Link> */}
 
-<Link to={currentPlan === "Enterprise" ? "#" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
-  <FileLock size={18} /> Audit Log <Lock size={14} className="ml-auto opacity-60" />
+<Link to={currentPlan === "Pro" ? "/AuditPage" : "#"} className="flex items-center gap-2 hover:bg-gray-700 px-4 py-2 rounded" onClick={handleClick}>
+  <FileLock size={18} /> Audit Log {currentPlan == "Free" && (
+          <Lock size={14} className="ml-auto opacity-60" />
+        )}
 </Link>
 
 

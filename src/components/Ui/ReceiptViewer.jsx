@@ -14,6 +14,7 @@ export default function ReceiptViewer({ txnId, onClose }) {
     const fetchPdf = async () => {
       try {
         const apiKey = localStorage.getItem("apiKey");
+        const token = localStorage.getItem("jwtToken");
         if (!apiKey) {
           alert("API Key missing. Please log in again.");
           return;
@@ -24,6 +25,7 @@ export default function ReceiptViewer({ txnId, onClose }) {
           {
             method: "GET",
             headers: {
+              Authorization : `Bearer ${token}`,
               accept: "*/*",
               "X-API-KEY": apiKey,
             },

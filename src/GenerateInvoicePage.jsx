@@ -412,6 +412,7 @@ const handleDelete = (id) => {
 const handleDownloadPDF = async (id) => {
   try {
     const apiKey = localStorage.getItem("apiKey");
+    const token = localStorage.getItem("jwtToken");
     if (!apiKey) {
       alert("API Key missing. Please log in again.");
       return;
@@ -420,6 +421,7 @@ const handleDownloadPDF = async (id) => {
     const response = await fetch(`http://localhost:5214/api/ExportPdf/${id}/export-pdf`, {
       method: "GET",
       headers: {
+        Authorization: `Bearer ${token}`,
         "accept": "*/*",
         "X-API-KEY": apiKey,
       },
@@ -820,21 +822,21 @@ useApiInterceptor();
 </div>
 
                 <div className="mb-6">
-<div className="flex items-center mb-4">
-  <div className="flex-grow text-center">
-    <h3 className="text-lg font-medium text-gray-900"><b>Add Invoice Items</b></h3>
-  </div>
-  <div>
-    <button
-      type="button"
-      onClick={addItem}
-      className="text-teal-600 hover:text-teal-700 flex items-center gap-1"
-    >
-      <Plus size={16} />
-      Add Item
-    </button>
-  </div>
-</div>
+                  <div className="flex items-center mb-4">
+                    <div className="flex-grow text-center">
+                      <h3 className="text-lg font-medium text-gray-900"><b>Add Invoice Items</b></h3>
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={addItem}
+                        className="text-teal-600 hover:text-teal-700 flex items-center gap-1"
+                      >
+                        <Plus size={16} />
+                        Add Item
+                      </button>
+                    </div>
+                  </div>
 
                   {formData.items.map((item, index) => (
                     <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-md">
