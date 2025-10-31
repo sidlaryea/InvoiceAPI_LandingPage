@@ -24,8 +24,11 @@ export default function RecurringInvoicePage() {
     tax: 0,
     notes: '',
     totalTaxAmount: 0,
-    isActive: true
+    isActive: true,
+    discountPercent: 0
   });
+
+
 
   ///////Function for Fetching the Recurring Invoices/////////
   const fetchRecurringInvoices = async () => {
@@ -410,11 +413,14 @@ const formatIntervalDisplay = (interval, frequency, dayOfWeek, dayOfMonth) => {
         frequency: 1,
         dayOfWeek: '',
         dayOfMonth: '',
+        items: [{ productId: '', name: '', quantity: 1, unitPrice: 0, description: '' }],
         amount: 0,
         currency: 'GHS',
         tax: 0,
         notes: '',
-        isActive: true
+        totalTaxAmount: 0,
+        isActive: true,
+        discountPercent: 0
       });
       setSelectedCustomer(null);
       setIsCreating(false);
