@@ -228,24 +228,56 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
     window.location.replace("/InvoiceAPI_LandingPage/login");
   };
 
-  const handleSubmitNew = () => {
+  const handleSubmitNew = async () => {
     if (!formData.name || !formData.rate || !formData.country || !formData.region) {
       alert('Please fill in all required fields');
       return;
     }
 
-    if (editingTax) {
-      setTaxRates(taxRates.map(t => t.id === editingTax.id ? { ...formData, id: t.id, createdAt: t.createdAt } : t));
-    } else {
-      const newTax = {
-        ...formData,
-        id: taxRates.length + 1,
-        createdAt: new Date().toISOString().split('T')[0],
-        rate: parseFloat(formData.rate)
-      };
-      setTaxRates([...taxRates, newTax]);
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      alert("Authentication token not found.");
+      return;
     }
-    closeModal();
+
+    const payload = {
+      name: formData.name,
+      rate: parseFloat(formData.rate),
+      country: formData.country,
+      region: formData.region,
+      isActive: formData.isActive,
+      productCurrencyId: formData.currencyId
+    };
+
+    try {
+      if (editingTax) {
+        // For editing, assuming PUT endpoint exists
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/TaxComponent/${editingTax.id}`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        alert("Tax component updated successfully!");
+      } else {
+        // For adding new tax
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/TaxComponent`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        alert("Tax component added successfully!");
+      }
+
+      // Refresh tax rates after successful submission
+      fetchTaxRates();
+      openModalNew();
+      closeModal();
+      
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.message || error.message));
+    }
   };
 
   const openModalNew = (tax = null) => {
@@ -325,9 +357,9 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
           <h1 className="text-2xl font-bold text-gray-800">Tax Rates Setup</h1>
           <button
             onClick={() => openModalNew()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 " />
             Add Tax Rate
           </button>
         </div>
@@ -489,7 +521,7 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
                   setStatusFilter('all');
                   setCountryFilter('all');
                 }}
-                className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+                className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition cursor-pointer"
               >
                 Clear Filters
               </button>
@@ -526,7 +558,7 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Name</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Rate (%)</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Country</th>
-                    <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Region</th>
+                    <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Region/Province/State</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Status</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900 text-center">Actions</th>
                   </tr>
