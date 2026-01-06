@@ -18,6 +18,8 @@ import {
 export default function InvoiceDashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [currentCurrency, setCurrentCurrency] = useState({ code: "GHS", symbol: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isChangeImageDialogOpen, setIsChangeImageDialogOpen] = useState(false);
@@ -116,7 +118,25 @@ export default function InvoiceDashboardPage() {
       );
     } catch (err) {
       console.error("Failed to fetch user profile", err);
-      
+
+    }
+  };
+
+  // 🔹 Fetch Currencies
+  const fetchCurrencies = async () => {
+    try {
+      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const mappedCurrencies = res.data.map(c => ({
+        id: c.id,
+        code: c.currencyCode,
+        name: c.currencyName ?? c.currencyCode,
+        symbol: c.symbol ?? "",
+        flag: getFlagEmoji(c.countryCode),
+        country: c.countryCode
+      }));
+      setCurrencies(mappedCurrencies);
+    } catch (error) {
+      console.error("Failed to load currencies", error);
     }
   };
 
@@ -125,7 +145,23 @@ export default function InvoiceDashboardPage() {
     fetchUserProfile();
     fetchTransactions();
     fetchExpenses();
+    fetchCurrencies();
   }, []);
+
+  // 🔹 Set current currency based on country
+  useEffect(() => {
+    if (currencies.length > 0) {
+      const countryCode = localStorage.getItem('countryCode');
+      let currency = currencies.find(c => c.country === countryCode);
+      if (!currency) {
+        currency = currencies.find(c => c.code === 'GHS'); // Fallback to GHS
+      }
+      if (!currency) {
+        currency = currencies[0]; // Fallback to first available
+      }
+      setCurrentCurrency({ code: currency.code, symbol: currency.symbol });
+    }
+  }, [currencies]);
 
   const handleSignOut = () => {
     localStorage.clear();
@@ -260,7 +296,7 @@ useApiInterceptor();
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Payments Collected Today</p>
             <h2 className="text-2xl font-bold text-gray-800">
-              GHS {formatNumber(todayPayments)}
+              {currentCurrency.code} {formatNumber(todayPayments)}
             </h2>
             {trend(todayPayments, yesterdayPayments)}
           </div>
@@ -268,7 +304,7 @@ useApiInterceptor();
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Total Outstanding Balance</p>
             <h2 className="text-2xl font-bold text-gray-800">
-              GHS {formatNumber(totalBalance)}
+              {currentCurrency.code} {formatNumber(totalBalance)}
             </h2>
             {trend(totalBalance, yesterdayBalance)}
           </div>
@@ -284,7 +320,7 @@ useApiInterceptor();
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Total Expenses</p>
             <h2 className="text-2xl font-bold text-gray-800">
-              GHS {formatNumber(expenses.reduce((sum, exp) => sum + exp.amount, 0))}
+              {currentCurrency.code} {formatNumber(expenses.reduce((sum, exp) => sum + exp.amount, 0))}
             </h2>
             <p className="text-gray-400 text-sm mt-1">All time</p>
           </div>
@@ -305,7 +341,7 @@ useApiInterceptor();
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value) => `GHS ${formatNumber(value)}`} />
+                <Tooltip formatter={(value) => `${currentCurrency.code} ${formatNumber(value)}`} />
                 <Legend />
                 <Line type="monotone" dataKey="payments" stroke="#14b8a6" strokeWidth={2} />
                 <Line type="monotone" dataKey="balance" stroke="#f59e0b" strokeWidth={2} />
@@ -329,7 +365,7 @@ useApiInterceptor();
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value) => `GHS ${formatNumber(value)}`} />
+                <Tooltip formatter={(value) => `${currentCurrency.code} ${formatNumber(value)}`} />
                 <Legend />
                 <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} />
               </LineChart>
@@ -358,8 +394,7 @@ useApiInterceptor();
                   </p>
                 </div>
                 <span className="font-semibold text-gray-800">
-    
-              GHS {formatNumber(txn.amountPaid)}
+                  {currentCurrency.code} {formatNumber(txn.amountPaid)}
                 </span>
               </li>
             ))}

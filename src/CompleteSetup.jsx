@@ -4,6 +4,7 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
 import { useNavigate } from "react-router-dom";
+import AddTaxRateModal from "./components/AddTaxRateModal";
 
 
 export default function CompleteSetup() {
@@ -20,6 +21,8 @@ export default function CompleteSetup() {
     defaultInvoicePrefix: '',
     defaultPaymentInstruction: '',
     paymentTerms: '',
+    taxRates: [],
+    currency: 'GHS',
     payStackPublicKey: '',
     payStackSecretkey: '',
     paySatckCurrency: 'GHS',
@@ -31,13 +34,23 @@ export default function CompleteSetup() {
 
   });
 
+  const [newTaxRate, setNewTaxRate] = useState({
+    name: '',
+    rate: '',
+    country: '',
+    region: '',
+    status: 'Active'
+  });
+
   const [activeTab, setActiveTab] = useState(0);
   const [countries, setCountries] = useState([]);
   const [industries, setIndustries] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
   const [paystackEnabled, setPaystackEnabled] = useState(false);
   const [logo, setLogo] = useState(null);
   ///const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
 
@@ -45,9 +58,9 @@ export default function CompleteSetup() {
 
   
 
-  const tabTitles = ["Business Info", "Branding", "Payment Setup"];
+  const tabTitles = ["Business Info", "Branding", "Tax Rates & Currency", "Payment Setup"];
   const nextTab = () => {
-    if (activeTab < 2) setActiveTab(activeTab + 1);
+    if (activeTab < 3) setActiveTab(activeTab + 1);
     else handlesubmit();
   };
 
@@ -75,6 +88,33 @@ export default function CompleteSetup() {
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  const handleNewTaxRateChange = e => {
+    setNewTaxRate({ ...newTaxRate, [e.target.name]: e.target.value });
+  };
+
+  const addTaxRate = () => {
+    if (newTaxRate.name && newTaxRate.rate && newTaxRate.country && newTaxRate.region) {
+      setForm({ ...form, taxRates: [...form.taxRates, newTaxRate] });
+      setNewTaxRate({ name: '', rate: '', country: '', region: '', status: 'Active' });
+    }
+  };
+
+  const removeTaxRate = (index) => {
+    const updatedTaxRates = form.taxRates.filter((_, i) => i !== index);
+    setForm({ ...form, taxRates: updatedTaxRates });
+  };
+
+  useEffect(() => {
+    const selectedCountry = countries.find(c => c.id == form.countryId);
+    if (selectedCountry) {
+      setNewTaxRate(prev => ({ ...prev, country: selectedCountry.name }));
+      const matchingCurrency = currencies.find(c => c.countryCode === selectedCountry.code);
+      if (matchingCurrency) {
+        setForm(prev => ({ ...prev, currency: matchingCurrency.currencyCode }));
+      }
+    }
+  }, [form.countryId, countries, currencies]);
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -118,7 +158,8 @@ export default function CompleteSetup() {
       console.log("Logo File Path:", logoFilePath);
     }
       console.log("Industry ID raw:", form.industryId);
-      // 2. Submit Business Info
+      
+      // 2. Check if Business Info exists and Submit/Update Business Info
     const businessInfoPayload = {
       businessName: form.businessName,
       industryId: parseInt(form.industryId) || null,
@@ -131,9 +172,7 @@ export default function CompleteSetup() {
       userId
     };
 
-    
-
-    await axios.post("http://localhost:5214/api/BusinessInfo", businessInfoPayload, {
+     await axios.post("http://localhost:5214/api/BusinessInfo", businessInfoPayload, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -144,6 +183,8 @@ export default function CompleteSetup() {
       defaultInvoicePrefix: form.defaultInvoicePrefix,
       paymentTerms: form.paymentTerms,
       defaultPaymentInstructions: form.defaultPaymentInstruction,
+      taxRate: parseFloat(form.taxRate) || 0,
+      currency: form.currency,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -152,7 +193,28 @@ export default function CompleteSetup() {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // 4. Submit Payment Setup (only if Paystack is enabled)
+
+
+    // 4. Submit Tax Rates
+    const selectedCurrency = currencies.find(c => c.currencyCode === form.currency);
+    const productCurrencyId = selectedCurrency ? selectedCurrency.id : 0;
+
+    for (const taxRate of form.taxRates) {
+      const taxRatePayload = {
+        name: taxRate.name,
+        rate: parseFloat(taxRate.rate),
+        country: taxRate.country,
+        region: taxRate.region,
+        isActive: taxRate.status === 'Active',
+        productCurrencyId
+      };
+      await axios.post("http://localhost:5214/api/TaxComponent", taxRatePayload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+    
+
+    // 5. Submit Payment Setup (only if Paystack is enabled)
     if (paystackEnabled) {
       const paymentPayload = {
         id: 0,
@@ -204,6 +266,15 @@ export default function CompleteSetup() {
       .catch((err) => console.error("Failed to fetch countries:", err));
   }, []);
 
+  useEffect(() => {
+    axios.get("http://localhost:5214/api/Currency/GetAllCurrencies")
+      .then((res) => {
+        const activeCurrencies = res.data.filter(c => c.isActive);
+        setCurrencies(activeCurrencies);
+      })
+      .catch((err) => console.error("Failed to fetch currencies:", err));
+  }, []);
+
 
  
 
@@ -218,7 +289,7 @@ export default function CompleteSetup() {
           <img src="./logo.png" alt="Logo" className="h-12 w-12 mb-2" />
           <h2 className="text-3xl font-bold text-blue-700">Complete Your Setup</h2>
           <p className="text-gray-500 text-center max-w-lg">
-            Help us personalize your experience by completing these three quick steps.
+            Help us personalize your experience by completing these four quick steps.
           </p>
         </div>
 
@@ -339,6 +410,69 @@ export default function CompleteSetup() {
 
           {activeTab === 2 && (
             <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Tax Rates ({form.taxRates.length})</h3>
+                <select name="currency" value={form.currency} onChange={handleChange} className="input bg-white border border-gray-300 rounded-lg px-4 py-3">
+                  <option value="">Select Currency</option>
+                  {currencies.map((currency) => (
+                    <option key={currency.id} value={currency.currencyCode}>
+                      {currency.currencyCode} - {currency.currencyName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {form.taxRates.map((tax, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tax.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tax.rate}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tax.country}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tax.region}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            tax.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {tax.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => removeTaxRate(index)}
+                            className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Add Tax Rate
+              </button>
+            </div>
+          )}
+
+          {activeTab === 3 && (
+            <div className="space-y-6">
               <div className="flex items-center space-x-3">
                 <input type="checkbox" checked={paystackEnabled} onChange={() => setPaystackEnabled(!paystackEnabled)} className="accent-blue-600" />
                 <label className="text-gray-700 font-medium">Enable Paystack</label>
@@ -380,11 +514,18 @@ export default function CompleteSetup() {
 
           <div className="mt-6 text-center">
             <button onClick={nextTab} className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-              {activeTab < 2 ? "Next" : "Finish & Login"}
+              {activeTab < 3 ? "Next" : "Finish & Login"}
             </button>
           </div>
         </div>
       </div>
+      <AddTaxRateModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        newTaxRate={newTaxRate}
+        handleNewTaxRateChange={handleNewTaxRateChange}
+        addTaxRate={addTaxRate}
+      />
     </div>
   );
 }

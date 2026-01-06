@@ -20,6 +20,9 @@ export default function GenerateInvoicePage() {
     totalTaxAmount: 0,
     createdBy: 'System',
     status: 'Draft'});
+  const [currentCurrency, setCurrentCurrency] = useState('GHS');
+  const [currencies, setCurrencies] = useState([]);
+
 
 
 ///////Function for Fetching the Invoice/////////
@@ -68,7 +71,7 @@ const showNotification = (message, type = 'success') => {
     const indexOfFirstInvoice = indexOfLastInvoice - invoicesPerPage;
     const currentInvoices = filteredInvoices.slice(indexOfFirstInvoice, indexOfLastInvoice);
     const totalPages = Math.ceil(invoices.length / invoicesPerPage);
-    const [taxComponents, setTaxComponents] = useState([]); // Holds list of tax items from DB 
+    const [taxComponents, setTaxComponents] = useState([]); // Holds list of tax items from DB
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [notification, setNotification] = useState(null);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -85,11 +88,9 @@ const showNotification = (message, type = 'success') => {
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
-    const [showSuccess, setShowSuccess] = useState(false);
-
-    
-     
+  const [showSuccess, setShowSuccess] = useState(false);
   
+
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
@@ -186,14 +187,15 @@ if (!token) {
     }
   };
 
-  ///////Fetch taxes By Country//////////// 
-  useEffect(() => {
-  const fetchTaxesByCountry = async () => {
-    const country = localStorage.getItem("country"); // get registered country
-      if (!country) return; // no country stored
-
+  ///////Fetch taxes By User////////////
+  ///////Fetch taxes By User////////////
+  const fetchTaxesByUser = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Tax/by-country/${country}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`
+        }
+      });
       const data = await res.json();
       console.log("Fetched taxes on load:", data);
       setTaxComponents(data);
@@ -203,12 +205,47 @@ if (!token) {
     }
   };
 
-    
-    fetchTaxesByCountry();
-    fetchUserProfile();
-    
-  }, [formData.country]);
+  // 🔹 Fetch Currencies
+  const fetchCurrencies = async () => {
+    try {
+      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const mappedCurrencies = res.data.map(c => ({
+        id: c.id,
+        code: c.currencyCode,
+        name: c.currencyName ?? c.currencyCode,
+        symbol: c.symbol ?? "",
+        flag: getFlagEmoji(c.countryCode),
+        country: c.countryCode
+      }));
 
+      setCurrencies(mappedCurrencies);
+
+      // Set current currency based on countryCode
+      const currentCountryCode = localStorage.getItem('countryCode');
+      const currentCurrencyData = mappedCurrencies.find(c => c.country === currentCountryCode);
+      if (currentCurrencyData) {
+        setCurrentCurrency(currentCurrencyData.code);
+      } else {
+        setCurrentCurrency('GHS'); // default
+      }
+    } catch (error) {
+      console.error("Failed to load currencies", error);
+      setCurrentCurrency('GHS'); // default on error
+    }
+  };
+
+  useEffect(() => {
+    fetchTaxesByUser();
+    fetchUserProfile();
+    fetchCurrencies();
+  }, []);
+
+  // Set formData.currency to currentCurrency when it changes
+  useEffect(() => {
+    if (currentCurrency) {
+      setFormData(prev => ({ ...prev, currency: currentCurrency }));
+    }
+  }, [currentCurrency]);
   
   
   const handleSignOut = () => {
@@ -251,12 +288,17 @@ console.log("selectedInvoice", selectedInvoice);
     const token = localStorage.getItem("jwtToken");
     const apiKey = localStorage.getItem("apiKey");
     const userId = localStorage.getItem("userId");
+    console.log("userId (localStorage):", userId, typeof userId);
+    console.log("Tax userIds sample:", taxComponents.map(t => ({ id: t.id, userId: t.userId, type: typeof t.userId })));
+    console.log("Filtered (strict):", taxComponents.filter(t => t.userId === userId).length);
 
     if (!token || !apiKey) {
       console.error("Missing token or API key");
       alert("Please log in and ensure your API key is available.");
       return;
     }
+
+    
 
     const payload = {
       customerId: parseInt(formData.customerId, 10), // Use selectedCustomer if available
@@ -267,7 +309,7 @@ console.log("selectedInvoice", selectedInvoice);
       country: formData.country,
       region: formData.region,
       totalTaxAmount: formData.totalTaxAmount,
-      taxComponents: taxComponents.map(tax => ({
+      taxComponents: taxComponents.filter(t => t.userId === userId).map(tax => ({
     name: tax.name,
     rate: tax.rate
   })),
@@ -557,7 +599,7 @@ useApiInterceptor();
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-2">Total Value</h3>
           <div className="text-3xl font-bold text-gray-900">
-            {formatCurrency(invoices.reduce((sum, inv) => sum + inv.total, 0))}
+            {formatCurrency(invoices.reduce((sum, inv) => sum + inv.total, 0), currentCurrency)}
           </div>
         </div>
       </div>
@@ -784,9 +826,11 @@ useApiInterceptor();
                       onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     >
-                      <option value="GHS">GHS</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.flag} {currency.code} - {currency.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>

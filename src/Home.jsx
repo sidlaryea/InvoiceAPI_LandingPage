@@ -80,7 +80,7 @@ function Home() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Enhanced Navbar */}
       <header className="bg-white/95 backdrop-blur-sm shadow-lg fixed w-full z-50 transition-all duration-300">
-        <div className="absolute left-0 top-0 h-full flex items-center px-4">
+        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3 group">
             <div className="relative">
               <img src="./logo.png" alt="InvoiceAPI Logo" className="h-9 w-9 transition-transform group-hover:scale-110" />
@@ -90,8 +90,6 @@ function Home() {
               InvoiceAPI by SidConsult
             </span>
           </div>
-        </div>
-        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
 
           {/* Desktop Menu */}
           <div className="hidden md:flex ml-auto space-x-8 text-sm text-gray-700">

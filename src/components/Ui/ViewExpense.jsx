@@ -1,7 +1,7 @@
-import { X, Eye } from "lucide-react";
+import { X, Eye, Edit } from "lucide-react";
 import { useState } from "react";
 
-export default function ViewExpense({ isOpen, expense, onClose, expenseCategories, getStatusElement }) {
+export default function ViewExpense({ isOpen, expense, onClose, expenseCategories, getStatusElement, onEdit }) {
   const [showReceiptViewer, setShowReceiptViewer] = useState(false);
 
   if (!isOpen || !expense) return null;
@@ -109,6 +109,18 @@ export default function ViewExpense({ isOpen, expense, onClose, expenseCategorie
 
             {/* Modal Footer */}
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+              {expense.expenseStatus === 0 && onEdit && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onEdit(expense);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors cursor-pointer"

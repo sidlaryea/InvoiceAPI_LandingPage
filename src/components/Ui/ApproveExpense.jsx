@@ -41,12 +41,26 @@ export default function ApproveExpense({ isOpen, expense, onClose, onStatusUpdat
     }
 
     try {
+      const updateBody = {
+        id: expense.id || 0,
+        expenseId: expense.expenseId || "",
+        date: expense.date || new Date().toISOString(),
+        categoryId: expense.categoryId || 0,
+        amount: expense.amount || 0,
+        description: expense.description || "",
+        paymentMethod: expense.paymentMethod || "",
+        reference: expense.reference || "",
+        merchant: expense.merchant || "",
+        expenseStatus: selectedStatus,
+        receiptUrl: expense.receiptUrl || "",
+        userId: expense.userId || "",
+        updatedAt: new Date().toISOString(),
+        isActive: expense.isActive ?? true
+      };
+
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Expense/${idToUse}/status?newStatus=${selectedStatus}`,
-        {
-          id: idToUse,
-          status: selectedStatus
-        },
+        `${import.meta.env.VITE_API_URL}/api/Expense/updateExpense`,
+        updateBody,
         {
           headers: {
             Authorization: `Bearer ${token}`,

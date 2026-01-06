@@ -31,12 +31,13 @@ export default function PaymentPage() {
 const [userProfile, setUserProfile] = useState(null);
 const [selectedTxnId, setSelectedTxnId] = useState(null);
   const [reference, setReference] = useState("");
+  const [currencies, setCurrencies] = useState([]);
 
   // Logic to calculate KPIs
   useEffect(() => {
     if (invoices.length > 0) {
      // setTotalInvoices(invoices.length);
-      setUnpaidInvoices(invoices.filter(inv => inv.status === "Draft").length + invoices.filter(inv => inv.status === "PartiallyPaid").length);
+      setUnpaidInvoices(invoices.filter(inv => inv.status === "Draft").length + invoices.filter(inv => inv.status === "PartiallyPaid").length + invoices.filter(inv => inv.status === "Sent").length);
       //setPartiallyPaidAmount(invoices.filter(inv => inv.status === "PartiallyPaid").reduce((acc, inv) => acc + inv.amountPaid, 0));
       setBalanceRemaining(invoices.reduce((acc, inv) => acc + inv.balanceDue, 0));
       setExpectedTotal(invoices.reduce((acc, inv) => acc + Math.round((inv.total || 0) * 100) / 100, 0));
@@ -78,7 +79,21 @@ const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png")
   };
 
 
+const country = localStorage.getItem('country');
+const countryCode = localStorage.getItem('countryCode');
 
+// Flag helper function
+const getFlagEmoji = (code) => {
+  return code
+    ?.toUpperCase()
+    .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+};
+
+// Currency helper function
+const getCurrencySymbol = (countryCode) => {
+  const currency = currencies.find(c => c.countryCode === countryCode && c.isActive);
+  return currency ? currency.symbol : 'GHS'; // Default to GHS
+};
 
 
 
@@ -186,6 +201,7 @@ const fetchInvoices = async () => {
     fetchInvoices();
     fetchUserProfile();
     fetchTransactions();
+    fetchCurrencies();
   }, []);
 
   useEffect(() => {
@@ -406,7 +422,7 @@ const fetchTransactions = async () => {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          
+
           "Content-Type": "application/json",
         },
       }
@@ -422,13 +438,34 @@ const fetchTransactions = async () => {
     const data = await response.json();
     console.log("✅ Transactions loaded:", data);
     console.log("Transaction data structure:", JSON.stringify(data, null, 2)); // Log the structure
-    
+
 
     // Return transactions to be used by caller
     setTransactions(data);
   } catch (error) {
     console.error("⚠️ Error fetching transactions:", error);
     return [];
+  }
+};
+
+const fetchCurrencies = async () => {
+  try {
+    const response = await fetch("http://localhost:5214/api/Currency/GetAllCurrencies", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("❌ Failed to fetch currencies");
+    }
+
+    const data = await response.json();
+    console.log("✅ Currencies loaded:", data);
+    setCurrencies(data);
+  } catch (error) {
+    console.error("⚠️ Error fetching currencies:", error);
   }
 };
   
@@ -491,29 +528,32 @@ useApiInterceptor(); // Initialize the API interceptor
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Invoice Management</h1>
       <p className="text-gray-600">Create and manage your payments efficiently!</p>
      </div>
-
+      <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-1 text-sm bg-gray-50">
+          <span className="text-xl">{getFlagEmoji(countryCode)}</span>
+          <span>{country}</span>
+        </div>
      
    </div>
    </div>
         {/* KPI Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          
+
+
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Unpaid Invoices</p>
             <h2 className="text-xl font-semibold text-red-600">{unpaidInvoices}</h2>
           </div>
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Remaining Balance</p>
-            <h2 className="text-xl font-semibold text-teal-700">GHS {formatNumber(balanceRemaining)}</h2>
+            <h2 className="text-xl font-semibold text-teal-700">{getCurrencySymbol(countryCode)} {formatNumber(balanceRemaining)}</h2>
           </div>
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Total Payments</p>
-            <h2 className="text-xl font-semibold text-teal-700">GHS {formatNumber(totalPayments)}</h2>
+            <h2 className="text-xl font-semibold text-teal-700">{getCurrencySymbol(countryCode)} {formatNumber(totalPayments)}</h2>
           </div>
           <div className="bg-white p-4 rounded shadow">
             <p className="text-sm text-gray-500">Expected Total </p>
-            <h2 className="text-xl font-semibold text-green-600">GHS {formatNumber(expectedTotal)}</h2>
+            <h2 className="text-xl font-semibold text-green-600">{getCurrencySymbol(countryCode)} {formatNumber(expectedTotal)}</h2>
           </div>
         </div>
 
@@ -547,7 +587,7 @@ useApiInterceptor(); // Initialize the API interceptor
                 setFilteredInvoices([]); // hide dropdown
               }}
             >
-              {invoice.invoiceNumber} – GHS {formatNumber(invoice.balanceDue)}
+              {invoice.invoiceNumber} – {getCurrencySymbol(countryCode)} {formatNumber(invoice.balanceDue)}
             </li>
           ))}
         </ul>
@@ -560,8 +600,8 @@ useApiInterceptor(); // Initialize the API interceptor
               <div className="text-sm text-gray-700">
                 <p><strong>Customer Name:</strong> {selectedInvoice.customer.fullName}</p>
           <p><strong>Invoice Issue Date:</strong> {new Date(selectedInvoice.createdAt).toLocaleDateString()}</p>
-          <p><strong>Balance Due:</strong> GHS {formatNumber(selectedInvoice.balanceDue)}</p>
-          <p><strong>Paid Amount:</strong> GHS {formatNumber(selectedInvoice.amountPaid)}</p>
+          <p><strong>Balance Due:</strong> {getCurrencySymbol(countryCode)} {formatNumber(selectedInvoice.balanceDue)}</p>
+          <p><strong>Paid Amount:</strong> {getCurrencySymbol(countryCode)} {formatNumber(selectedInvoice.amountPaid)}</p>
 
 
           
@@ -607,14 +647,14 @@ useApiInterceptor(); // Initialize the API interceptor
             {selectedInvoice && selectedMethod ? (
                     <>
                         <p className="text-sm text-gray-700 mb-3">
-                          You're paying <strong>GHS {formatNumber(paymentAmount && Number(paymentAmount) > 0 ? paymentAmount : selectedInvoice.balanceDue)}</strong> via{" "}
+                          You're paying <strong>{getCurrencySymbol(countryCode)} {formatNumber(paymentAmount && Number(paymentAmount) > 0 ? paymentAmount : selectedInvoice.balanceDue)}</strong> via{" "}
                           <strong>{selectedMethod}</strong>
                         </p>
 
                         {/* Partial Payment Input */}
                         <div className="mb-3">
                           <label className="block text-sm font-medium text-gray-700">
-                            Payment Amount (GHS)
+                            Payment Amount ({getCurrencySymbol(countryCode)})
                           </label>
                           <input
                             type="number"
@@ -623,12 +663,12 @@ useApiInterceptor(); // Initialize the API interceptor
                             value={paymentAmount}
                             onChange={(e) => setPaymentAmount(e.target.value)}
                             className="w-full p-2 border rounded mt-1"
-                            placeholder={`Max: GHS ${selectedInvoice.balanceDue.toFixed(2)}`}
+                            placeholder={`Max: ${getCurrencySymbol(countryCode)} ${selectedInvoice.balanceDue.toFixed(2)}`}
                           />
                         </div>
 
                         {/* Reference Input (only for non-cash / non-paystack) */}
-                        {selectedMethod !== "Paystack" && selectedMethod !== "Cash" && (
+                        {selectedMethod !== "Paystack"  && (
                           <div className="mb-3">
                             <label className="block text-sm font-medium text-gray-700">
                               Reference / Transaction ID
@@ -721,7 +761,7 @@ useApiInterceptor(); // Initialize the API interceptor
           {/* Right side */}
           <div className="text-right">
             <span className="font-semibold text-gray-800 block">
-              GHS {formatNumber(txn.amountPaid || 0)}
+              {getCurrencySymbol(countryCode)} {formatNumber(txn.amountPaid || 0)}
             </span>
             <div className="flex gap-2 justify-end mt-1">
               <button

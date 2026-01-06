@@ -25,8 +25,16 @@ export default function ExpensesPage() {
   const [showApproveExpenseModal, setShowApproveExpenseModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [selectedExpenseForApproval, setSelectedExpenseForApproval] = useState(null);
+  const [ setIsEditing] = useState(false);
+  const [ setSelectedExpenseForEdit] = useState(null);
   // const [activeTab, setActiveTab] = useState('expenses');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    dateRange: 'All',
+    status: 'All',
+    category: 'All',
+    paymentMethod: 'All'
+  });
   const [formData, setFormData] = useState({
     date: '',
     category: '',
@@ -58,14 +66,27 @@ export default function ExpensesPage() {
   // Expense categories from API
   const [expenseCategories, setExpenseCategories] = useState([]);
 
+  // Currencies from API
+  const [currencies, setCurrencies] = useState([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Country info for header
   const getFlagEmoji = (code) => {
     return code
       ?.toUpperCase()
       .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
   };
+  const getCurrencySymbol = (code) => {
+    const currency = currencies.find(c => c.countryCode === code);
+    return currency ? currency.symbol : 'GH₵';
+  };
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
+  
 
   // Categories for filter and form
   const categories = [
@@ -211,6 +232,61 @@ export default function ExpensesPage() {
     );
   };
 
+  // Handle edit expense
+  const handleEditExpense = (expense) => {
+    setSelectedExpenseForEdit(expense);
+    setIsEditing(true);
+    setFormData({
+      date: expense.date.split('T')[0], // Format date for input
+      category: expense.categoryId,
+      amount: expense.amount.toString(),
+      description: expense.description,
+      merchant: expense.merchant,
+      paymentMethod: expense.paymentMethod,
+      project: '',
+      receiptNumber: '',
+      taxAmount: '',
+      tags: []
+    });
+    setShowExpenseModal(true);
+  };
+
+  // Handle delete expense
+  const handleDeleteExpense = async (id) => {
+    const expense = expenses.find(exp => exp.id === id);
+    if (!expense) return;
+
+    // Prevent deletion if status is Approved (2) or Paid (3)
+    if (expense.expenseStatus === 2 || expense.expenseStatus === 3) {
+      alert("Cannot delete an Approved or Paid Expense.Contact the adminastrator for assistance.");
+      return;
+    }
+
+    const expenseId = expense.expenseId;
+    const confirmDelete = window.confirm(`Are you sure you want to delete expense with expense number ${expenseId}?`);
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      alert("Authentication token not found.");
+      return;
+    }
+
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/Expense/${id}?softDelete=true`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      });
+      alert("Expense deleted successfully!");
+      // Remove the expense from the state
+      setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
+    } catch (error) {
+      alert("Failed to delete expense: " + (error.response?.data?.message || error.message));
+    }
+  };
+
   // Handle save expense
   const saveExpense = async () => {
     if (!formData.date || !formData.category || !formData.amount || !formData.description || !formData.merchant || !formData.paymentMethod) {
@@ -327,8 +403,19 @@ export default function ExpensesPage() {
     }
   };
 
+  const fetchCurrencies = async () => {
+    try {
+      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      //console.log("Currencies fetched:", res.data);
+      setCurrencies(res.data);
+    } catch (err) {
+      console.error("Error fetching currencies", err);
+    }
+  };
+
   useEffect(() => {
     fetchExpenseCategories();
+    fetchCurrencies();
     fetchUserProfile();
   }, []);
 
@@ -358,6 +445,138 @@ export default function ExpensesPage() {
       });
     }
   }, [expenses]);
+
+  // Filter expenses based on search query and filters
+  const filteredExpenses = expenses.filter(expense => {
+    // Search query filter
+    const matchesSearch = expense.expenseId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      expense.merchant.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Date range filter
+    let matchesDateRange = true;
+    if (filters.dateRange !== 'All') {
+      const expenseDate = new Date(expense.date);
+      const now = new Date();
+      const daysDiff = Math.floor((now - expenseDate) / (1000 * 60 * 60 * 24));
+
+      switch (filters.dateRange) {
+        case 'Last 30 days':
+          matchesDateRange = daysDiff <= 30;
+          break;
+        case 'Last 3 months':
+          matchesDateRange = daysDiff <= 90;
+          break;
+        case 'Last 6 months':
+          matchesDateRange = daysDiff <= 180;
+          break;
+        case 'Custom range':
+          // For now, treat as all since custom range isn't implemented
+          matchesDateRange = true;
+          break;
+        default:
+          matchesDateRange = true;
+      }
+    }
+
+    // Status filter
+    let matchesStatus = true;
+    if (filters.status !== 'All') {
+      const statusMap = {
+        'Pending': 1,
+        'Approved': 2,
+        'Rejected': 4
+      };
+      matchesStatus = expense.expenseStatus === statusMap[filters.status];
+    }
+
+    // Category filter
+    let matchesCategory = true;
+    if (filters.category !== 'All') {
+      const category = expenseCategories.find(c => c.id === expense.categoryId);
+      const categoryName = category ? category.name : expense.categoryId;
+      matchesCategory = categoryName === filters.category;
+    }
+
+    // Payment method filter
+    let matchesPaymentMethod = true;
+    if (filters.paymentMethod !== 'All') {
+      matchesPaymentMethod = expense.paymentMethod === filters.paymentMethod;
+    }
+
+    return matchesSearch && matchesDateRange && matchesStatus && matchesCategory && matchesPaymentMethod;
+  });
+
+  // Pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentExpenses = filteredExpenses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Reset to page 1 when expenses change or search query changes or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [expenses, searchQuery, filters]);
+
+  // Handle CSV export
+  const handleExport = () => {
+    if (filteredExpenses.length === 0) {
+      alert("No expenses to export.");
+      return;
+    }
+
+    // CSV headers
+    const headers = [
+      "Expense ID",
+      "Date",
+      "Category",
+      "Amount (GH₵)",
+      "Description",
+      "Merchant",
+      "Payment Method",
+      "Status"
+    ];
+
+    // Convert expenses to CSV rows
+    const csvRows = filteredExpenses.map(expense => {
+      const category = expenseCategories.find(c => c.id === expense.categoryId);
+      const categoryName = category ? category.name : expense.categoryId;
+      const statusText = getStatusText(expense.expenseStatus);
+      const formattedDate = new Date(expense.date).toLocaleDateString();
+
+      return [
+        expense.expenseId,
+        formattedDate,
+        categoryName,
+        expense.amount.toFixed(2),
+        `"${expense.description.replace(/"/g, '""')}"`, // Escape quotes in description
+        expense.merchant,
+        expense.paymentMethod,
+        statusText
+      ];
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers, ...csvRows]
+      .map(row => row.join(","))
+      .join("\n");
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `expenses_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <DashboardLayout
@@ -439,7 +658,7 @@ export default function ExpensesPage() {
                 <span className="text-gray-500 text-sm font-medium">Total Amount</span>
                 <TrendingUp className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="text-3xl font-bold text-gray-900">GH₵{formatNumber(stats.totalAmount)}</div>
+              <div className="text-3xl font-bold text-gray-900">{getCurrencySymbol(countryCode)}{formatNumber(stats.totalAmount)}</div>
               <div className="flex items-center mt-2 text-xs text-gray-500">
                 <span>All time</span>
               </div>
@@ -450,7 +669,7 @@ export default function ExpensesPage() {
                 <span className="text-gray-500 text-sm font-medium">This Month</span>
                 <Calendar className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="text-3xl font-bold text-gray-900">GH₵{formatNumber(stats.thisMonthAmount)}</div>
+              <div className="text-3xl font-bold text-gray-900">{getCurrencySymbol(countryCode)}{formatNumber(stats.thisMonthAmount)}</div>
               <div className="flex items-center mt-2 text-xs text-red-600">
                 <TrendingDown className="w-3 h-3 mr-1" />
                 <span>{stats.thisMonthPercentage}% from last month</span>
@@ -482,6 +701,8 @@ export default function ExpensesPage() {
                       type="text"
                       placeholder="Search by ID, description, merchant..."
                       className="w-full lg:w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                 </div>
@@ -495,7 +716,10 @@ export default function ExpensesPage() {
                     <span className="hidden sm:inline">Filters</span>
                   </button>
                   
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 cursor-pointer">
+                  <button
+                    onClick={handleExport}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                  >
                     <Download className="w-4 h-4" />
                     <span className="hidden sm:inline">Export</span>
                   </button>
@@ -516,7 +740,12 @@ export default function ExpensesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={filters.dateRange}
+                        onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+                      >
+                        <option>All</option>
                         <option>Last 30 days</option>
                         <option>Last 3 months</option>
                         <option>Last 6 months</option>
@@ -525,8 +754,12 @@ export default function ExpensesPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <option>All Statuses</option>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={filters.status}
+                        onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                      >
+                        <option>All</option>
                         <option>Pending</option>
                         <option>Approved</option>
                         <option>Rejected</option>
@@ -534,17 +767,25 @@ export default function ExpensesPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <option>All Categories</option>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={filters.category}
+                        onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+                      >
+                        <option>All</option>
                         {categories.map(cat => (
-                          <option key={cat.name}>{cat.icon} {cat.name}</option>
+                          <option key={cat.name} value={cat.name}>{cat.icon} {cat.name}</option>
                         ))}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <option>All Methods</option>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={filters.paymentMethod}
+                        onChange={(e) => setFilters(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                      >
+                        <option>All</option>
                         <option>Mobile Money</option>
                         <option>Credit Card</option>
                         <option>Cash</option>
@@ -602,17 +843,17 @@ export default function ExpensesPage() {
                     <tr>
                       <td colSpan="10" className="px-6 py-4 text-center text-red-500">Error: {error}</td>
                     </tr>
-                  ) : expenses.length === 0 ? (
+                  ) : currentExpenses.length === 0 ? (
                     <tr>
                       <td colSpan="10" className="px-6 py-4 text-center text-gray-500">No expenses found.</td>
                     </tr>
                   ) : (
-                    expenses.map((expense) => {
+                    currentExpenses.map((expense) => {
                       const category = expenseCategories.find(c => c.id === expense.categoryId);
                       const categoryName = category ? category.name : expense.categoryId;
                       const categoryInfo = getCategoryInfo(categoryName);
                       return (
-                        <tr key={expense.expenseId} className="hover:bg-gray-50 transition-colors">
+                        <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <input type="checkbox" className="rounded border-gray-300" />
                           </td>
@@ -627,7 +868,7 @@ export default function ExpensesPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="font-semibold text-gray-900">GH₵{expense.amount.toFixed(2)}</span>
+                            <span className="font-semibold text-gray-900">{getCurrencySymbol(countryCode)}{expense.amount.toFixed(2)}</span>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{expense.description}</td>
                           <td className="px-6 py-4 text-sm text-gray-600">{expense.merchant}</td>
@@ -660,7 +901,11 @@ export default function ExpensesPage() {
                               {/* <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Reject">
                                 <XCircle className="w-4 h-4" />
                               </button> */}
-                              <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">
+                              <button
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Delete"
+                                onClick={() => handleDeleteExpense(expense.id)}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -675,13 +920,37 @@ export default function ExpensesPage() {
 
             {/* Pagination */}
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-600">Showing 1 to 4 of 47 expenses</span>
+              <span className="text-sm text-gray-600">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredExpenses.length)} of {filteredExpenses.length} expenses
+              </span>
               <div className="flex gap-2">
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer">Previous</button>
-                <button className="px-3 py-1 bg-teal-600 text-white rounded text-sm">1</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">2</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">3</button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer">Next</button>
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded text-sm ${
+                      currentPage === page
+                        ? 'bg-teal-600 text-white'
+                        : 'border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
             </div>
           </div>
@@ -733,7 +1002,7 @@ export default function ExpensesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount (GH₵) *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount ({getCurrencySymbol(countryCode)}) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -828,6 +1097,7 @@ export default function ExpensesPage() {
             onClose={() => setShowViewExpenseModal(false)}
             expenseCategories={expenseCategories}
             getStatusElement={getStatusElement}
+            onEdit={handleEditExpense}
           />
         )}
 

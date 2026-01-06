@@ -11,6 +11,7 @@ export default function TaxRatesPage() {
   const [countryFilter, setCountryFilter] = useState('all');
   const [showMore, setShowMore] = useState(false);
   const [currencies, setCurrencies] = useState([]);
+  const [userCurrencyCode, setUserCurrencyCode] = useState(null);
   const [taxRates, setTaxRates] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -18,7 +19,8 @@ export default function TaxRatesPage() {
     country: '',
     region: '',
     isActive: true,
-    currencyId: 1
+    currencyId: 1,
+    originalCountryCode: ''
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -54,6 +56,15 @@ export default function TaxRatesPage() {
     .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
 };
 
+  const getCountryName = (countryCode) => {
+    if (!countryCode) return '';
+    try {
+      return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode.toUpperCase());
+    } catch {
+      return countryCode; // Fallback to code if not found
+    }
+  };
+
 useEffect(() => {
 const fetchCurrencies = async () => {
     try {
@@ -69,13 +80,6 @@ const fetchCurrencies = async () => {
       }));
 
       setCurrencies(mappedCurrencies);
-
-      // Set initial selected currency: check localStorage first, then GHS, then first available
-      const defaultCode = localStorage.getItem('defaultCurrency');
-      const initialCurrency = defaultCode
-        ? mappedCurrencies.find(c => c.code === defaultCode)
-        : mappedCurrencies.find(c => c.code === 'GHS') || mappedCurrencies[0];
-      if (initialCurrency) setSelectedCurrency(initialCurrency);
 
     } catch (error) {
       console.error("Failed to load currencies", error);
@@ -157,9 +161,25 @@ const fetchCurrencies = async () => {
     }
   };
 
+  const fetchUserDefaultCurrency = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
+      const data = response.data || [];
+      if (data.length > 0) {
+        setUserCurrencyCode(data[0].currencyCode);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user default currency:", error);
+    }
+  };
+
   const fetchTaxRates = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/TaxComponent/GetAllTaxComponents`, {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
       },
@@ -186,6 +206,7 @@ const fetchCurrencies = async () => {
 
   useEffect(() => {
     fetchUserProfile();
+    fetchUserDefaultCurrency();
   }, []);
 
   useEffect(() => {
@@ -193,6 +214,29 @@ const fetchCurrencies = async () => {
       fetchTaxRates();
     }
   }, [currencies]);
+
+  useEffect(() => {
+    if (currencies.length > 0) {
+      // Prioritize userCurrencyCode, then localStorage, then GHS, then first available
+      let initialCurrency = null;
+      if (userCurrencyCode) {
+        initialCurrency = currencies.find(c => c.code === userCurrencyCode);
+      }
+      if (!initialCurrency) {
+        const defaultCode = localStorage.getItem('defaultCurrency');
+        initialCurrency = defaultCode ? currencies.find(c => c.code === defaultCode) : null;
+      }
+      if (!initialCurrency) {
+        initialCurrency = currencies.find(c => c.code === 'GHS');
+      }
+      if (!initialCurrency) {
+        initialCurrency = currencies[0];
+      }
+      if (initialCurrency) {
+        setSelectedCurrency(initialCurrency);
+      }
+    }
+  }, [currencies, userCurrencyCode]);
 
   
 const selectedCurrencyId = selectedCurrency?.id ?? null;
@@ -228,36 +272,79 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
     window.location.replace("/InvoiceAPI_LandingPage/login");
   };
 
-  const handleSubmitNew = () => {
+  const handleSubmitNew = async () => {
     if (!formData.name || !formData.rate || !formData.country || !formData.region) {
       alert('Please fill in all required fields');
       return;
     }
 
-    if (editingTax) {
-      setTaxRates(taxRates.map(t => t.id === editingTax.id ? { ...formData, id: t.id, createdAt: t.createdAt } : t));
-    } else {
-      const newTax = {
-        ...formData,
-        id: taxRates.length + 1,
-        createdAt: new Date().toISOString().split('T')[0],
-        rate: parseFloat(formData.rate)
-      };
-      setTaxRates([...taxRates, newTax]);
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      alert("Authentication token not found.");
+      return;
     }
-    closeModal();
+
+    const payload = {
+      name: formData.name,
+      rate: parseFloat(formData.rate),
+      country: formData.country,
+      region: formData.region,
+      isActive: formData.isActive,
+      productCurrencyId: formData.currencyId
+    };
+
+    try {
+      if (editingTax) {
+        // For editing, assuming PUT endpoint exists
+        const editpayload = {
+          id: editingTax.id,
+          name: formData.name,
+          rate: parseFloat(formData.rate),
+          country: formData.country,
+          region: formData.region,
+          isActive: formData.isActive,
+          productCurrencyId: formData.currencyId
+        };
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/TaxComponent/${editingTax.id}`, editpayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        alert("Tax component updated successfully!");
+      } else {
+        // For adding new tax
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/TaxComponent`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        alert("Tax component added successfully!");
+      }
+
+      // Refresh tax rates after successful submission
+      fetchTaxRates();
+      closeModalNew();
+
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.message || error.message));
+    }
   };
 
   const openModalNew = (tax = null) => {
     if (tax) {
       setEditingTax(tax);
-      setFormData(tax);
+      setFormData({
+        ...tax,
+        country: getCountryName(tax.country) || tax.country
+      });
     } else {
       setEditingTax(null);
       setFormData({
         name: '',
         rate: '',
-        country: '',
+        country: getCountryName(selectedCurrency?.country) || '',
         region: '',
         isActive: true,
         currencyId: selectedCurrencyId ?? 1
@@ -279,9 +366,25 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
     });
   };
 
-  const deleteTax = (id) => {
+  const deleteTax = async (id) => {
     if (window.confirm('Are you sure you want to delete this tax component?')) {
-      setTaxRates(taxRates.filter(t => t.id !== id));
+      const token = localStorage.getItem("jwtToken");
+      if (!token) {
+        alert("Authentication token not found.");
+        return;
+      }
+
+      try {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/TaxComponent/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        alert("Tax component deleted successfully!");
+        fetchTaxRates();
+      } catch (error) {
+        alert("Error: " + (error.response?.data?.message || error.message));
+      }
     }
   };
 
@@ -325,9 +428,9 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
           <h1 className="text-2xl font-bold text-gray-800">Tax Rates Setup</h1>
           <button
             onClick={() => openModalNew()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 " />
             Add Tax Rate
           </button>
         </div>
@@ -489,7 +592,7 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
                   setStatusFilter('all');
                   setCountryFilter('all');
                 }}
-                className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+                className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition cursor-pointer"
               >
                 Clear Filters
               </button>
@@ -526,7 +629,7 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Name</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Rate (%)</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Country</th>
-                    <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Region</th>
+                    <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Region/Province/State</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900">Status</th>
                     <th className="px-6 py-3 border-b border-gray-200 font-medium text-gray-900 text-center">Actions</th>
                   </tr>
@@ -615,7 +718,7 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Region/Province</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region/Province/State</label>
                   <input
                     type="text"
                     value={formData.region}
