@@ -147,6 +147,10 @@ export default function AuditPage() {
   };
 
   const handleApplyFilters = () => {
+    if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
+      setError("Start date cannot be after end date.");
+      return;
+    }
     fetchAuditData();
   };
 
