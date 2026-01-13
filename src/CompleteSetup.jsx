@@ -26,6 +26,7 @@ export default function CompleteSetup() {
     payStackPublicKey: '',
     payStackSecretkey: '',
     paySatckCurrency: 'GHS',
+    stripeCurrency: 'USD',
     accountHolderName: '',
     accountNumber: '',
     bankName: '',
@@ -47,6 +48,7 @@ export default function CompleteSetup() {
   const [industries, setIndustries] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const [paystackEnabled, setPaystackEnabled] = useState(false);
+  const [stripeEnabled, setStripeEnabled] = useState(false);
   const [logo, setLogo] = useState(null);
   ///const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(null);
@@ -236,6 +238,26 @@ export default function CompleteSetup() {
         headers: { Authorization: `Bearer ${token}` }
       });
     }
+
+    //STRIPE
+if (stripeEnabled) {
+  const stripePayload = {
+    id: 0,
+    userId,
+    enableStripe: true,
+    stripeCurrency: form.stripeCurrency || "USD",
+    allowPartialPayments: form.allowPartialPayments || false,
+    acceptOfflinePayments: form.acceptOfflinePayments || false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  await axios.post(
+    "http://localhost:5214/api/PaymentSetup/Save User Payment Setup",
+    stripePayload,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+}
 
     alert("Setup completed successfully!");
     localStorage.setItem("setupComplete", "true");
@@ -472,45 +494,186 @@ export default function CompleteSetup() {
           )}
 
           {activeTab === 3 && (
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" checked={paystackEnabled} onChange={() => setPaystackEnabled(!paystackEnabled)} className="accent-blue-600" />
-                <label className="text-gray-700 font-medium">Enable Paystack</label>
-              </div>
+  <div className="space-y-8">
 
-              {paystackEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <input type="text" name="payStackPublicKey" onChange={handleChange} value={form.payStackPublicKey} placeholder="Paystack Public Key" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
-                  <input type="text" name="payStackSecretkey" onChange={handleChange} value={form.payStackSecretkey} placeholder="Paystack Secret Key (optional)" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
-                  <select className="input  bg-white border border-gray-300 rounded-lg px-4 py-3" value={form.paySatckCurrency} onChange={handleChange} name="currency">
-                    <option value="GHS">GHS - Ghana Cedi</option>
-                    <option value="USD">USD - US Dollar</option>
-                  </select>
-                  <a href="https://support.paystack.com/en/articles/1006030" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm md:col-span-2">Where do I find my Paystack keys?</a>
+    {/* PAYMENT PROVIDERS */}
+    <div className="flex space-x-8">
+      
+      
 
-                  <input type="text" onChange={handleChange} name="accountHolderName" value={form.accountHolderName} placeholder="Account Holder Name" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
-                  <input type="text" onChange={handleChange} name="accountNumber" value={form.accountNumber} placeholder="Account Number / Wallet Number" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
-                  <input type="text" onChange={handleChange} name="bankName" value={form.bankName} placeholder="Bank Name / MoMo Provider" className="input bg-white border border-gray-300 rounded-lg px-4 py-3" />
+      {/* PAYSTACK TOGGLE */}
+      <label className="flex items-center space-x-3">
+        <input
+          type="checkbox"
+          checked={paystackEnabled}
+          onChange={() => setPaystackEnabled(!paystackEnabled)}
+          className="accent-blue-600"
+        />
 
-                  <div className="col-span-2 space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input name="allowPartialPayments" type="checkbox" checked={form.allowPartialPayments} onChange={(e) =>
-                      setForm({ ...form, allowPartialPayments: e.target.checked })} className="accent-blue-600" />
-                      <span className="text-sm">Accept Partial Payments</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input name="allowOfflinePayments" type="checkbox" checked={form.allowOfflinePayments} onChange={(e) =>
-                      setForm({ ...form, allowOfflinePayments: e.target.checked })} className="accent-blue-600" />
-                      <span className="text-sm">Allow Offline Payments (bank/MoMo info will appear on invoice)</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-              <div className="text-center pt-4">
-                <button onClick={() => navigate("/login")} className="text-blue-600 underline text-sm">Skip for now → Configure later in dashboard</button>
-              </div>
-            </div>
-          )}
+        <span className="font-medium text-gray-700">
+          Enable Paystack (Local Payments)
+        </span><img src="./logos/paystack_logo.png" alt="Paystack Logo" className="h-10 w-12 mr-2 rounded" />
+      </label>
+
+      {/* STRIPE TOGGLE */}
+      <label className="flex items-center space-x-3">
+        <input
+          type="checkbox"
+          checked={stripeEnabled}
+          onChange={() => setStripeEnabled(!stripeEnabled)}
+          className="accent-purple-600"
+        />
+
+        <span className="font-medium text-gray-700">
+          Enable Stripe (International Cards)
+        </span><img src="./logos/stripe_new.png" alt="Paystack Logo" className="h-10 w-12 mr-2 rounded" />
+      </label>
+    </div>
+
+    {/* PAYSTACK CONFIG */}
+    {paystackEnabled && (
+      <div className="space-y-6  rounded-xl p-6 bg-gray-50">
+        <h4 className="font-semibold text-gray-800">
+          Paystack Configuration
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <input
+            type="text"
+            name="payStackPublicKey"
+            value={form.payStackPublicKey}
+            onChange={handleChange}
+            placeholder="Paystack Public Key"
+            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+          />
+
+          <input
+            type="text"
+            name="payStackSecretkey"
+            value={form.payStackSecretkey}
+            onChange={handleChange}
+            placeholder="Paystack Secret Key (optional)"
+            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+          />
+
+          <select
+            name="paySatckCurrency"
+            value={form.paySatckCurrency}
+            onChange={handleChange}
+            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+          >
+            <option value="GHS">GHS – Ghana Cedi</option>
+            <option value="USD">USD – US Dollar</option>
+          </select>
+
+          <a
+            href="https://support.paystack.com/en/articles/1006030"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline text-sm md:col-span-2"
+          >
+            Where do I find my Paystack keys?
+          </a>
+
+          <input
+            type="text"
+            name="accountHolderName"
+            value={form.accountHolderName}
+            onChange={handleChange}
+            placeholder="Account Holder Name"
+            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+          />
+
+          <input
+            type="text"
+            name="accountNumber"
+            value={form.accountNumber}
+            onChange={handleChange}
+            placeholder="Account Number / Wallet Number"
+            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+          />
+
+          <input
+            type="text"
+            name="bankName"
+            value={form.bankName}
+            onChange={handleChange}
+            placeholder="Bank Name / MoMo Provider"
+            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+          />
+        </div>
+      </div>
+    )}
+
+    {/* STRIPE CONFIG */}
+    {stripeEnabled && (
+      <div className="space-y-6  rounded-xl p-6 bg-gray-50">
+        <h4 className="font-semibold text-gray-800">
+          Stripe Configuration
+        </h4>
+
+        <select
+          name="stripeCurrency"
+          value={form.stripeCurrency}
+          onChange={handleChange}
+          className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+        >
+          <option value="USD">USD – US Dollar</option>
+          <option value="CAD">CAD – Canadian Dollar</option>
+          <option value="GBP">GBP – British Pound</option>
+        </select>
+
+        <p className="text-sm text-gray-600">
+          Stripe payments are processed securely by our platform.
+          No API keys are required.
+        </p>
+      </div>
+    )}
+
+    {/* COMMON PAYMENT RULES */}
+    {(paystackEnabled || stripeEnabled) && (
+      <div className="space-y-2">
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={form.allowPartialPayments}
+            onChange={(e) =>
+              setForm({ ...form, allowPartialPayments: e.target.checked })
+            }
+            className="accent-blue-600"
+          />
+          <span className="text-sm">Accept Partial Payments</span>
+        </label>
+
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={form.allowOfflinePayments}
+            onChange={(e) =>
+              setForm({ ...form, allowOfflinePayments: e.target.checked })
+            }
+            className="accent-blue-600"
+          />
+          <span className="text-sm">
+            Allow Offline Payments (bank/MoMo info appears on invoice)
+          </span>
+        </label>
+      </div>
+    )}
+
+    {/* SKIP */}
+    <div className="text-center pt-4">
+      <button
+        onClick={() => navigate("/login")}
+        className="text-blue-600 underline text-sm"
+      >
+        Skip for now → Configure later in dashboard
+      </button>
+    </div>
+
+  </div>
+)}
+
 
           <div className="mt-6 text-center">
             <button onClick={nextTab} className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">

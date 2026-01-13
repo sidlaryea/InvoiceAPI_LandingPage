@@ -67,6 +67,10 @@ const SettingsPage = () => {
     allowPartialPayments: false,
     allowOfflinePayments: false,
     paystackEnabled: false,
+    stripePublicKey: '',
+    stripeSecretKey: '',
+    stripeCurrency: '',
+    stripeEnabled: false,
 
     //Billing Fields
     plan:'',
@@ -269,7 +273,11 @@ const uploadLogo = async (file) => {
             bankName: formData.bankName,
             allowPartialPayments: formData.allowPartialPayments,
             allowOfflinePayments: formData.allowOfflinePayments,
-            enablePaystack:formData.paystackEnabled
+            enablePaystack:formData.paystackEnabled,
+            stripePublicKey: formData.stripePublicKey,
+            stripeSecretKey: formData.stripeSecretKey,
+            stripeCurrency: formData.stripeCurrency,
+            enableStripe: formData.stripeEnabled
           };
           break;
 
@@ -455,7 +463,11 @@ const uploadLogo = async (file) => {
               bankName: response.data.bankName || '',
               allowPartialPayments: response.data.allowPartialPayments || false,
               allowOfflinePayments: response.data.acceptOfflinePayments || false,
-              paystackEnabled: !!response.data.enablePaystack
+              paystackEnabled: !!response.data.enablePaystack,
+              stripePublicKey: response.data.stripePublicKey || '',
+              stripeSecretKey: response.data.stripeSecretKey || '',
+              stripeCurrency: response.data.stripeCurrency || '',
+              stripeEnabled: !!response.data.enableStripe
             }));
           }
         }
@@ -1024,10 +1036,20 @@ const [selectedInvoice, setSelectedInvoice] = useState(null);
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Setup</h3>
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                <input type="checkbox" checked={formData.paystackEnabled} onChange={(e) => handleInputChange('paystackEnabled', e.target.checked)} className="accent-blue-600" />
-                <label className="text-gray-700 font-medium">Enable Paystack</label>
-              </div>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" checked={formData.paystackEnabled} onChange={(e) => handleInputChange('paystackEnabled', e.target.checked)} className="accent-blue-600" />
+                    <label className="text-gray-700 font-medium">Enable Paystack</label>
+                    <img src="./logos/paystack_logo.png" alt="Paystack Logo" className="h-10 w-12 mr-2 rounded" />
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" checked={formData.stripeEnabled} onChange={(e) => handleInputChange('stripeEnabled', e.target.checked)} className="accent-blue-600" />
+                    <label className="text-gray-700 font-medium">Enable Stripe</label>
+                    <img src="./logos/stripe_new.png" alt="Stripe Logo" className="h-10 w-12 mr-2 rounded" />
+                  </div>
+                </div>
+
+              
 
               {formData.paystackEnabled && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1073,7 +1095,34 @@ const [selectedInvoice, setSelectedInvoice] = useState(null);
                     </label>
                   </div>
                 </div>
-              )}
+
+                 )}
+
+{/* STRIPE CONFIG */}
+{formData.stripeEnabled && (
+  <div className="space-y-6  rounded-xl p-6 bg-gray-50">
+    <h4 className="font-semibold text-gray-800">
+      Stripe Configuration
+    </h4>
+
+    <select
+      name="stripeCurrency"
+      value={formData.stripeCurrency}
+      onChange={(e) => handleInputChange('stripeCurrency', e.target.value)}
+      className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+    >
+      <option value="USD">USD – US Dollar</option>
+      <option value="CAD">CAD – Canadian Dollar</option>
+      <option value="GBP">GBP – British Pound</option>
+    </select>
+
+    <p className="text-sm text-gray-600">
+      Stripe payments are processed securely by our platform.
+      No API keys are required.
+    </p>
+  </div>
+)}
+
               </div>
               <hr className="border-gray-200" />
               <div className="flex justify-end">

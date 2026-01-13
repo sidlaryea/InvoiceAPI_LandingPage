@@ -47,7 +47,7 @@ const PaystackButton = ({ invoice, onSuccess, onError }) => {
 
       // 2. Prepare transaction
       const reference = `INV-${invoice.id}-${Date.now()}`;
-      const amountInPesewas = Math.round(invoice.total * 100);
+      const amountInPesewas = Math.ceil(Number(invoice.total) * 100);
 
       // 3. Trigger Paystack checkout
       const paystack = new window.PaystackPop();

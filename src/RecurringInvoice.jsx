@@ -50,6 +50,7 @@ export default function RecurringInvoicePage() {
   useEffect(() => {
     fetchRecurringInvoices();
     fetchUserProfile();
+    fetchCurrencies();
   }, []);
 
   const showNotification = (message, type = 'success') => {
@@ -102,7 +103,8 @@ export default function RecurringInvoicePage() {
   const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png");
   //const [showSuccess, setShowSuccess] = useState(false);
   const [taxComponents, setTaxComponents] = useState([]); // Holds list of tax items from DB 
-
+  const [currentCurrency, setCurrentCurrency] = useState('GHS');
+const [currencies, setCurrencies] = useState([]);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
@@ -201,12 +203,15 @@ export default function RecurringInvoicePage() {
 
  // 🧭 Fetch taxes by country
   useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
     const fetchTaxesByCountry = async () => {
       const country = localStorage.getItem("country");
       if (!country) return;
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Tax/by-country/${country}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`,{
+        headers: { Authorization: `Bearer ${token}` }
+      });
         const data = await res.json();
         console.log("Fetched taxes on load:", data);
         setTaxComponents(data);
@@ -272,6 +277,36 @@ export default function RecurringInvoicePage() {
   };
 
  
+// 🔹 Fetch Currencies
+  const fetchCurrencies = async () => {
+    try {
+      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const mappedCurrencies = res.data.map(c => ({
+        id: c.id,
+        code: c.currencyCode,
+        name: c.currencyName ?? c.currencyCode,
+        symbol: c.symbol ?? "",
+        flag: getFlagEmoji(c.countryCode),
+        country: c.countryCode
+      }));
+
+      setCurrencies(mappedCurrencies);
+
+      // Set current currency based on countryCode
+      const currentCountryCode = localStorage.getItem('countryCode');
+      const currentCurrencyData = mappedCurrencies.find(c => c.country === currentCountryCode);
+      if (currentCurrencyData) {
+        setCurrentCurrency(currentCurrencyData.code);
+      } else {
+        setCurrentCurrency('GHS'); // default
+      }
+    } catch (error) {
+      console.error("Failed to load currencies", error);
+      setCurrentCurrency('GHS'); // default on error
+    }
+  };
+
+
 
   const handleSignOut = () => {
     localStorage.clear();
@@ -592,6 +627,13 @@ const updateItem = (index, field, value) => {
     showNotification('Failed to update recurring invoice status', 'error');
   }
 };
+
+// Set formData.currency to currentCurrency when it changes
+  useEffect(() => {
+    if (currentCurrency) {
+      setFormData(prev => ({ ...prev, currency: currentCurrency }));
+    }
+  }, [currentCurrency]);
 
   useApiInterceptor();
 
@@ -964,19 +1006,21 @@ const updateItem = (index, field, value) => {
                     
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Currency
-                      </label>
-                      <select
-                        value={formData.currency}
-                        onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      >
-                        <option value="GHS">GHS</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                      </select>
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Currency
+                    </label>
+                    <select
+                      value={formData.currency}
+                      onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.flag} {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Discount %
