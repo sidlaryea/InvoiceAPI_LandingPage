@@ -182,15 +182,14 @@ function Home() {
           </p>
           
           <div className="relative rounded-xl overflow-hidden shadow-lg">
-            <video
-              src="Onboard.gif"
-              controls
-              poster="./public/Onboard.gif"
+              <img
+              src="/InvoiceAPI_LandingPage/Onboard.gif"
+              alt="InvoiceAPI onboarding demo"
               className="w-full rounded-xl border border-gray-200"
-            >
-              Your browser does not support the video tag.
-            </video>
+            />
+
           </div>
+
 
           <p className="mt-8 text-gray-500">
             Need help getting started? 
