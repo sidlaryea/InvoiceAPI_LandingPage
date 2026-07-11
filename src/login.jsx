@@ -27,7 +27,7 @@ export default function Login() {
 
       
 
-      const {token,setupComplete} = response.data;
+      const {token,invoiceSetupComplete} = response.data;
       
       if (token) {
         localStorage.setItem("jwtToken", token);
@@ -68,10 +68,10 @@ export default function Login() {
       }
 
       localStorage.setItem("apiKey", apiKey);
-      localStorage.setItem("setupComplete", setupComplete ? "true" : "false");
+      localStorage.setItem("setupComplete", invoiceSetupComplete ? "true" : "false");
 
 
-        if (setupComplete) {
+        if (invoiceSetupComplete) {
         navigate("/dashboard");
       } else {
         navigate("/complete-setup");

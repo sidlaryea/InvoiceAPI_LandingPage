@@ -16,11 +16,12 @@ export default function GenerateInvoicePage() {
     dueDate: '',
     currency: 'GHS',
     country: 'Ghana',
-    region: 'Greater Accra',
+    region: '',
     totalTaxAmount: 0,
     createdBy: 'System',
     status: 'Draft'});
   const [currentCurrency, setCurrentCurrency] = useState('GHS');
+  const [currentCountry, setCurrentCountry] = useState('Ghana');
   const [currencies, setCurrencies] = useState([]);
 
 
@@ -220,8 +221,11 @@ if (!token) {
 
       setCurrencies(mappedCurrencies);
 
-      // Set current currency based on countryCode
+      // Set current currency and country based on localStorage
       const currentCountryCode = localStorage.getItem('countryCode');
+      const currentCountryName = localStorage.getItem('country') || 'Ghana';
+      setCurrentCountry(currentCountryName);
+
       const currentCurrencyData = mappedCurrencies.find(c => c.country === currentCountryCode);
       if (currentCurrencyData) {
         setCurrentCurrency(currentCurrencyData.code);
@@ -231,6 +235,7 @@ if (!token) {
     } catch (error) {
       console.error("Failed to load currencies", error);
       setCurrentCurrency('GHS'); // default on error
+      setCurrentCountry('Ghana'); // default on error
     }
   };
 
@@ -246,6 +251,13 @@ if (!token) {
       setFormData(prev => ({ ...prev, currency: currentCurrency }));
     }
   }, [currentCurrency]);
+
+  // Set formData.country to currentCountry when it changes
+  useEffect(() => {
+    if (currentCountry) {
+      setFormData(prev => ({ ...prev, country: currentCountry }));
+    }
+  }, [currentCountry]);
   
   
   const handleSignOut = () => {
@@ -364,9 +376,9 @@ console.log("selectedInvoice", selectedInvoice);
      product: null // clear product object
       }],
       dueDate: '',
-      currency: 'GHS',
+      currency: currentCurrency,
       country: 'Ghana',
-      region: 'Greater Accra',
+      region: '',
       totalTaxAmount: 0,
       createdBy: 'System',
       status: 'Draft',

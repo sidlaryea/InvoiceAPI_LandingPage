@@ -34,8 +34,8 @@ const AddTaxRateModal = ({ isOpen, onClose, newTaxRate, handleNewTaxRateChange, 
             name="country"
             placeholder="Country"
             value={newTaxRate.country}
-            onChange={handleNewTaxRateChange}
-            className="input bg-white border border-gray-300 rounded-lg px-4 py-3"
+            readOnly
+            className="input bg-gray-100 border border-gray-300 rounded-lg px-4 py-3 cursor-not-allowed"
           />
           <input
             type="text"

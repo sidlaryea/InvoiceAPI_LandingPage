@@ -450,7 +450,7 @@ const formatIntervalDisplay = (interval, frequency, dayOfWeek, dayOfMonth) => {
         dayOfMonth: '',
         items: [{ productId: '', name: '', quantity: 1, unitPrice: 0, description: '' }],
         amount: 0,
-        currency: 'GHS',
+        currency: currentCurrency,
         tax: 0,
         notes: '',
         totalTaxAmount: 0,

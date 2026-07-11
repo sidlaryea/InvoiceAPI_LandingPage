@@ -32,6 +32,7 @@ const [userProfile, setUserProfile] = useState(null);
 const [selectedTxnId, setSelectedTxnId] = useState(null);
   const [reference, setReference] = useState("");
   const [currencies, setCurrencies] = useState([]);
+  const [paymentSetup, setPaymentSetup] = useState({ enablePaystack: false, enableStripe: false });
 
   // Logic to calculate KPIs
   useEffect(() => {
@@ -202,6 +203,7 @@ const fetchInvoices = async () => {
     fetchUserProfile();
     fetchTransactions();
     fetchCurrencies();
+    fetchPaymentSetup();
   }, []);
 
   useEffect(() => {
@@ -240,8 +242,15 @@ const fetchInvoices = async () => {
     {name:"Paystack", logo:"./logos/paystack_logo.png"},
     {name:"Cash", logo:"./logos/cash.png"},
     {name:"Wire Transfer", logo:"./logos/wire transfer.png"},
+    {name:"Stripe", logo:"./logos/stripelogo.jpg"},
 
   ];
+
+  const filteredPaymentOptions = paymentOptions.filter(option => {
+    if (option.name === "Paystack") return paymentSetup.enablePaystack;
+    if (option.name === "Stripe") return paymentSetup.enableStripe;
+    return true; // others are always enabled
+  });
 
   
   
@@ -468,6 +477,32 @@ const fetchCurrencies = async () => {
     console.error("⚠️ Error fetching currencies:", error);
   }
 };
+
+const fetchPaymentSetup = async () => {
+  try {
+    const token = localStorage.getItem("jwtToken");
+    const response = await fetch("http://localhost:5214/api/PaymentSetup/Get User Payment Setup", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("❌ Failed to fetch payment setup");
+    }
+
+    const data = await response.json();
+    console.log("✅ Payment setup loaded:", data);
+    setPaymentSetup({
+      enablePaystack: data.enablePaystack || false,
+      enableStripe: data.enableStripe || false,
+    });
+  } catch (error) {
+    console.error("⚠️ Error fetching payment setup:", error);
+  }
+};
   
 
 
@@ -614,7 +649,7 @@ useApiInterceptor(); // Initialize the API interceptor
           <div className="bg-white rounded shadow p-6 space-y-4 lg:col-span-1">
             <h2 className="text-lg font-bold text-gray-800 mb-2">Select Payment Method</h2>
             <div className="grid grid-cols-2 gap-4">
-              {paymentOptions.map((option, index) => (
+              {filteredPaymentOptions.map((option, index) => (
                 <div
                   key={index}
                   className={`border rounded-lg p-4 flex items-center gap-4 cursor-pointer transition ${

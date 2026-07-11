@@ -98,7 +98,7 @@ export default function CompleteSetup() {
   const addTaxRate = () => {
     if (newTaxRate.name && newTaxRate.rate && newTaxRate.country && newTaxRate.region) {
       setForm({ ...form, taxRates: [...form.taxRates, newTaxRate] });
-      setNewTaxRate({ name: '', rate: '', country: '', region: '', status: 'Active' });
+      setNewTaxRate({ name: '', rate: '', country: newTaxRate.country, region: '', status: 'Active' });
     }
   };
 
@@ -412,7 +412,15 @@ if (stripeEnabled) {
                 className="input bg-white border border-gray-300 rounded-lg px-4 py-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 onChange={handleFileChange}
               />
-              {preview && <img src={preview} alt="Preview" className="mt-4 h-20" />}
+              {preview && (
+                <div className="mt-4 flex items-center space-x-4">
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium"><b>Logo Preview:</b></p>
+                    {logo && logo.name && <p className="text-xs text-gray-500">{logo.name}</p>}
+                  </div>
+                  <img src={preview} alt="Logo Preview" className="h-20 rounded" />
+                </div>
+              ) }
             </form>
           )}
 
