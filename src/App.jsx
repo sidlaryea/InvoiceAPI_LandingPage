@@ -31,7 +31,7 @@ function App() {
 
   return (
     
-      <Router basename="/InvoiceAPI_LandingPage">
+      <Router>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/registration" element={<Register />} />
