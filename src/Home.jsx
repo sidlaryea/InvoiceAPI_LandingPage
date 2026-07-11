@@ -183,7 +183,7 @@ function Home() {
           
           <div className="relative rounded-xl overflow-hidden shadow-lg">
             <video
-              src="Demo.mp4"
+              src="Onboard.gif"
               controls
               poster="./public/Onboard.gif"
               className="w-full rounded-xl border border-gray-200"
