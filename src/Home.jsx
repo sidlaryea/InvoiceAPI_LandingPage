@@ -183,7 +183,7 @@ function Home() {
           
           <div className="relative rounded-xl overflow-hidden shadow-lg">
               <img
-              src="/InvoiceAPI_LandingPage/Onboard.gif"
+              src="/Onboard.gif"
               alt="InvoiceAPI onboarding demo"
               className="w-full rounded-xl border border-gray-200"
             />
