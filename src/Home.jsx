@@ -5,6 +5,7 @@ import DemoPoster from '/DemoPoster.png';
 import {Link} from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
+import RegisterModalHost from './components/Ui/RegisterModalHost';  
 
 
 function Home() {
@@ -155,9 +156,15 @@ function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-1000">
             
-            <button onClick={() => navigate('/Registration')}
-            className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-full hover:bg-blue-50 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl cursor-pointer">
-              Start Free Trial
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('register-modal');
+                if (el && typeof el.showModal === 'function') el.showModal();
+              }}
+              className="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition cursor-pointer"
+            >
+              Start Free — No Credit Card
             </button>
             
             <button 
@@ -488,6 +495,8 @@ function Home() {
           </div>
         </div>
       </footer>
+
+      <RegisterModalHost />
     </div>
 
           

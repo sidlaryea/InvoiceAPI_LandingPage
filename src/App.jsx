@@ -54,6 +54,7 @@ function App() {
           <Route path="/Taxpage" element={<TaxPage />} /> {/* Redirect all other paths to Home */}
           <Route path="/AuditPage" element={<AuditPage />} /> {/* Redirect all other paths to Home */}
           <Route path="ReportPage" element={<ReportPage />} /> {/* Redirect all other paths to Home */}
+          
         </Routes>
         
       </Router>
