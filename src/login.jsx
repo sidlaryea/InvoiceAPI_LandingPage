@@ -53,7 +53,7 @@ export default function Login() {
         
          // Fetch API key info
         const apiRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/ApiKey`,
+          `${API_BASE}/api/ApiKey`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,8 +93,8 @@ export default function Login() {
     try {
       setError("");
 
-      const API_URL = import.meta.env.VITE_API_URL;
-      const result = await axios.post(`${API_URL}/api/Login/google-login`, {
+      //const API_URL = import.meta.env.VITE_API_URL;
+      const result = await axios.post(`${API_BASE}/api/Login/google-login`, {
         idToken: credentialResponse.credential,
       });
 
@@ -110,7 +110,7 @@ export default function Login() {
 
       const token = localStorage.getItem("jwtToken");
 
-      const apiRes = await axios.get(`${API_URL}/api/ApiKey`, {
+      const apiRes = await axios.get(`${API_BASE}/api/ApiKey`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
