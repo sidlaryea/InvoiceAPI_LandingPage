@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import {jwtDecode} from "jwt-decode";
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 import { GoogleLogin } from "@react-oauth/google";
+import {API_BASE} from "./config/api"
 
 
 
@@ -22,7 +23,7 @@ export default function Login() {
     
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/Login/login`, {
+      const response = await axios.post(`${API_BASE}/api/Login/login`, {
         email,
         password,
       });
