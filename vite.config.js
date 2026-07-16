@@ -13,6 +13,13 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Avoid browser CORS issues by proxying API requests through Vite.
+      '/api': {
+        target: 'https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 });
+
