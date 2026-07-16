@@ -23,7 +23,7 @@ export default function Login() {
     
 
     try {
-      const response = await axios.post(`${API_BASE}/api/Login/login`, {
+      const response = await axios.post(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.netapi/Login/login`, {
         email,
         password,
       });
