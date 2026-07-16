@@ -23,7 +23,7 @@ export default function Login() {
     
 
     try {
-      const response = await axios.post(`/api/Login/login`, {
+      const response = await axios.post(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Login/login`, {
         email,
         password,
       });
