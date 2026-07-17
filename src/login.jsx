@@ -54,7 +54,7 @@ export default function Login() {
         
          // Fetch API key info
       const apiRes = await axios.get(
-          `/api/ApiKey`,
+          `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/ApiKey`,
 
           {
             headers: {
@@ -96,7 +96,7 @@ export default function Login() {
       setError("");
 
       //const API_URL = import.meta.env.VITE_API_URL;
-      const result = await axios.post(`/api/Login/google-login`, {
+      const result = await axios.post(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Login/google-login`, {
         idToken: credentialResponse.credential,
       });
 
@@ -113,7 +113,7 @@ export default function Login() {
 
       const token = localStorage.getItem("jwtToken");
 
-      const apiRes = await axios.get(`${API_BASE}/api/ApiKey`, {
+      const apiRes = await axios.get(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/ApiKey`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
