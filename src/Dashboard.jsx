@@ -52,14 +52,14 @@ export default function Dashboard() {
   // Optional placeholders
   
 const profileImageUrl = userProfile.profilePic
-  ? `${import.meta.env.VITE_API_URL}/${userProfile.profilePic.replace(/\\/g, '/')}`
+  ? `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/${userProfile.profilePic.replace(/\\/g, '/')}`
   : './user-placeholder.png'; 
  
     
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace ("/InvoiceAPI_LandingPage/login") // Redirect to home page after sign out
+    window.location.replace ("/login") // Redirect to home page after sign out
     
     
   };
@@ -112,7 +112,7 @@ const handleUpload = async () => {
   }
 try {
   await axios.put(
-    `${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`,
+    `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Register/update-profile-image`,
     formData,
     {
       headers: {
@@ -181,7 +181,7 @@ const closeChangePasswordDialog = () => {
     }
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-password`,
+        `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Register/update-password`,
         {
           currentPassword,
           newPassword,
@@ -218,7 +218,7 @@ const closeChangePasswordDialog = () => {
         }
 
         const profileRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/Register/profile`,
+          `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Register/profile`,
           { 
             headers: { 
               Authorization: `Bearer ${token}`,
@@ -238,7 +238,7 @@ const closeChangePasswordDialog = () => {
 
         // Fetch API key info
         const apiRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/ApiKey`,
+          `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/ApiKey`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -276,7 +276,7 @@ const closeChangePasswordDialog = () => {
         const apiKey = localStorage.getItem("api");
 
         const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/audit/recent`,
+          `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/audit/recent`,
           {
             headers: {
               "Content-Type": "application/json",
