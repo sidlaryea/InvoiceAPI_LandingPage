@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import InvoiceDashboardPage from "./InvoicedashboardPage"; // Import the invoice dashboard page
 import DashboardLayout from "./components/DashboardLayout";
+import { API_BASE } from "./config/api";
+
 
 export default function CreateInvoice() {
   const [loading, setLoading] = useState(true);
@@ -23,7 +25,7 @@ export default function CreateInvoice() {
   });
 
   const profileImageUrl = userProfile.profilePic
-    ? `${import.meta.env.VITE_API_URL}/${userProfile.profilePic.replace(/\\/g, "/")}`
+    ? `${API_BASE}/${userProfile.profilePic.replace(/\\/g, "/")}`
     : "/user-placeholder.png";
 
   const handleSignOut = () => {
@@ -62,7 +64,6 @@ export default function CreateInvoice() {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`,
         formData,
         {
           headers: {
@@ -110,7 +111,7 @@ export default function CreateInvoice() {
 
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-password`,
+        `${API_BASE}/api/Register/update-password`,
         {
           currentPassword,
           newPassword,
@@ -146,7 +147,7 @@ export default function CreateInvoice() {
       }
 
       const profileRes = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/Register/profile`,
+        `${API_BASE}/api/Register/profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

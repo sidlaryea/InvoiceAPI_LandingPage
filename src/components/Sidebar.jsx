@@ -20,6 +20,7 @@ import {
   TrainTrack,
   Bike
 } from "lucide-react";
+import {API_BASE} from "../config/api"
 
 
 
@@ -33,7 +34,7 @@ export default function Sidebar({ isSidebarOpen }) {
   const fetchApiKeyDetails = async (token) => {
     try {
       const apiRes = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/ApiKey`,
+        `${API_BASE}/api/ApiKey`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -66,7 +67,7 @@ export default function Sidebar({ isSidebarOpen }) {
       const token = localStorage.getItem("jwtToken");
       try {
         const profileRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/Register/profile`,
+          `${API_BASE}/api/Register/profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

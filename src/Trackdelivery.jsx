@@ -68,7 +68,7 @@ export default function TrackDeliveryPage() {
     formData.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -100,7 +100,7 @@ export default function TrackDeliveryPage() {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-password`,
+        `${API_BASE}/api/Register/update-password`,
         {
           currentPassword,
           newPassword,
@@ -123,11 +123,11 @@ export default function TrackDeliveryPage() {
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("jwtToken");
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, "/")}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }

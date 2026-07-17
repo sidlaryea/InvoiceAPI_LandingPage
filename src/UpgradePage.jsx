@@ -46,7 +46,7 @@ const UpgradePage = () => {
 const token = localStorage.getItem("jwtToken");
     const apiKey = localStorage.getItem("apiKey");
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/BusinessInfo`,
+        const response = await axios.get(`${API_BASE}/api/BusinessInfo`,
 
          {
           headers: { Authorization: `Bearer ${token}` 
@@ -220,7 +220,7 @@ const token = localStorage.getItem("jwtToken");
     const token = localStorage.getItem("token");
 
     const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/Payment/initialize`,
+      `${API_BASE}/api/Payment/initialize`,
       {
         email: businessInfo.email,
         amount: selectedPlan.price * 100, // convert to smallest currency unit

@@ -133,7 +133,7 @@ const initialProductState = {
     formData.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -164,7 +164,7 @@ const initialProductState = {
     }
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-password`, {
+      await axios.put(`${API_BASE}/api/Register/update-password`, {
         currentPassword,
         newPassword,
         confirmPassword: newPassword,
@@ -185,11 +185,11 @@ const initialProductState = {
     const token = localStorage.getItem("jwtToken");
     
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, '/')}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -213,7 +213,7 @@ const initialProductState = {
       const token = localStorage.getItem("jwtToken");
       const apiKey = localStorage.getItem("apiKey");
       const userId = localStorage.getItem("userId");
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Product/user/${userId}`, {
+      const res = await axios.get(`${API_BASE}/api/Product/user/${userId}`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "X-Api-Key": apiKey,
@@ -281,7 +281,7 @@ const initialProductState = {
     }
 
       //Send request to server
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/product`, formData, 
+      const response = await axios.post(`${API_BASE}/api/product`, formData, 
         {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -339,7 +339,7 @@ const initialProductState = {
       const token = localStorage.getItem("jwtToken");
       const apiKey = localStorage.getItem("apiKey");
 
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/products/${productId}`, {
+      await axios.delete(`${API_BASE}/api/products/${productId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "X-Api-Key": apiKey,
@@ -397,7 +397,7 @@ const handleUpdateProduct = async () => {
       for (const pair of fd.entries()) console.log(pair[0], pair[1]);
 
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Product/${currentProduct.id}`,
+        `${API_BASE}/api/Product/${currentProduct.id}`,
         fd,
         {
           headers: {
@@ -436,7 +436,7 @@ const handleUpdateProduct = async () => {
       console.log(currentProducts.map(p => p.id));
 
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Product/${currentProduct.id}`,
+        `${API_BASE}/api/Product/${currentProduct.id}`,
         payload,
         {
           headers: {
@@ -488,7 +488,7 @@ const fetchOptions = async () => {
     let tags = [];
 
     try {
-      const catRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/ProductCategory/user/${userId}`, {
+      const catRes = await axios.get(`${API_BASE}/api/ProductCategory/user/${userId}`, {
         headers: {
           "X-Api-Key": apiKey,
           Authorization: `Bearer ${token}`,
@@ -502,7 +502,7 @@ const fetchOptions = async () => {
     }
 
     try {
-      const unitRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/ProductUnit/user/${userId}`, {
+      const unitRes = await axios.get(`${API_BASE}/api/ProductUnit/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -515,7 +515,7 @@ const fetchOptions = async () => {
     }
 
     try {
-      const tagRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/ProductTag/GetTagByUserId?userId=${userId}`, {
+      const tagRes = await axios.get(`${API_BASE}/api/ProductTag/GetTagByUserId?userId=${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -705,7 +705,7 @@ useApiInterceptor(); // Initialize the API interceptor
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <img
-                                  src={product.imageUrl ? `${import.meta.env.VITE_API_URL}/${product.imageUrl.replace(/\\/g, '/')}` : './user-placeholder.png'}
+                                  src={product.imageUrl ? `${API_BASE}/${product.imageUrl.replace(/\\/g, '/')}` : './user-placeholder.png'}
                                   alt={product.name}
                                   className="w-16 h-16 object-cover rounded"
                                   onError={(e) => {

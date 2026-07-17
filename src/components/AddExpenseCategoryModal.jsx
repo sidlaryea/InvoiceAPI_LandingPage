@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Edit2, Trash2, Plus, Tag } from 'lucide-react';
 import axios from 'axios';
+import {API_BASE} from "../config/api"
 
 export function AddExpenseCategoryModal({ isOpen, onClose, onSaved }) {
   const [name, setName] = useState('');
@@ -18,7 +19,7 @@ export function AddExpenseCategoryModal({ isOpen, onClose, onSaved }) {
   const fetchCategories = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/ExpenseCategory/active`,
+        `${API_BASE}/api/ExpenseCategory/active`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCategories(res.data);
@@ -42,7 +43,7 @@ export function AddExpenseCategoryModal({ isOpen, onClose, onSaved }) {
       if (editingId) {
         // Update category
         await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/ExpenseCategory/${editingId}`,
+          `${API_BASE}/api/ExpenseCategory/${editingId}`,
           { name, description },
           { headers: {
             Authorization: `Bearer ${token}`,
@@ -52,7 +53,7 @@ export function AddExpenseCategoryModal({ isOpen, onClose, onSaved }) {
       } else {
         // Create new category
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/ExpenseCategory`,
+          `${API_BASE}/api/ExpenseCategory`,
           { name, description },
           { headers: {
             Authorization: `Bearer ${token}`,
@@ -78,7 +79,7 @@ export function AddExpenseCategoryModal({ isOpen, onClose, onSaved }) {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/ExpenseCategory/${id}`,
+        `${API_BASE}/api/ExpenseCategory/${id}`,
         { headers: {
           Authorization: `Bearer ${token}`,
           "X-Api-Key": apiKey,

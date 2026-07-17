@@ -106,7 +106,7 @@ const getCurrencySymbol = (countryCode) => {
     formData.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -137,7 +137,7 @@ if (!token) {
 }
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-password`, {
+      await axios.put(`${API_BASE}/api/Register/update-password`, {
         currentPassword,
         newPassword,
         confirmPassword: newPassword,
@@ -158,11 +158,11 @@ if (!token) {
     const token = localStorage.getItem("jwtToken");
     
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const { profileImageUrl, ...restProfile } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, '/')}`);
       setUserProfile(restProfile);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
@@ -179,7 +179,7 @@ const fetchInvoices = async () => {
       const apiKey = localStorage.getItem("apiKey"); // Include this if your API requires auth
       const token = localStorage.getItem("jwtToken");
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Invoice/GetInvoicesByUserId`, {
+      const res = await fetch(`${API_BASE}/api/Invoice/GetInvoicesByUserId`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -283,7 +283,7 @@ const handlePay = async () => {
     if (selectedMethod === "Paystack") {
       // 1. Fetch merchant Paystack setup
       const setupRes = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/PaymentSetup/me`,
+        `${API_BASE}/api/PaymentSetup/me`,
         {
           method: "GET",
           headers: {
@@ -336,7 +336,7 @@ email: selectedInvoice.customer?.email,
   callback:  function (response)  {
     (async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Payment/verify`, {
+      const res = await fetch(`${API_BASE}/api/Payment/verify`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -391,7 +391,7 @@ email: selectedInvoice.customer?.email,
       createdBy: firstname,
     };
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Payment`, {
+    const res = await fetch(`${API_BASE}/api/Payment`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -427,7 +427,7 @@ const fetchTransactions = async () => {
 
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/Payment/last?limit=30`,
+      `${API_BASE}/api/Payment/last?limit=30`,
       {
         method: "GET",
         headers: {

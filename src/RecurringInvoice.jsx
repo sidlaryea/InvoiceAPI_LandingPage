@@ -35,7 +35,7 @@ export default function RecurringInvoicePage() {
   const fetchRecurringInvoices = async () => {
     const token = localStorage.getItem("jwtToken");
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/RecurringInvoice/user`, {
+      const response = await axios.get(`${API_BASE}/api/RecurringInvoice/user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRecurringInvoices(response.data);
@@ -140,7 +140,7 @@ const [currencies, setCurrencies] = useState([]);
     formData.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -171,7 +171,7 @@ const [currencies, setCurrencies] = useState([]);
     }
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-password`, {
+      await axios.put(`${API_BASE}/api/Register/update-password`, {
         currentPassword,
         newPassword,
         confirmPassword: newPassword,
@@ -192,11 +192,11 @@ const [currencies, setCurrencies] = useState([]);
     const token = localStorage.getItem("jwtToken");
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, '/')}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -210,7 +210,7 @@ const [currencies, setCurrencies] = useState([]);
       if (!country) return;
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`,{
+        const res = await fetch(`${API_BASE}/api/TaxComponent/ByUser`,{
         headers: { Authorization: `Bearer ${token}` }
       });
         const data = await res.json();
@@ -319,7 +319,7 @@ const [currencies, setCurrencies] = useState([]);
   if (!query) return [];
 
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Product/search?query=${encodeURIComponent(query)}`);
+    const res = await fetch(`${API_BASE}/api/Product/search?query=${encodeURIComponent(query)}`);
     return await res.json(); // expected: array of { id, name, price, description }
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -427,7 +427,7 @@ const formatIntervalDisplay = (interval, frequency, dayOfWeek, dayOfMonth) => {
   }))
 };
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/RecurringInvoice`, payload, {
+      await axios.post(`${API_BASE}/api/RecurringInvoice`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "x-api-key": apiKey,
@@ -598,7 +598,7 @@ const updateItem = (index, field, value) => {
   try {
     if (isActive) {
       // 🔹 Pause recurring invoice
-      await fetch(`${import.meta.env.VITE_API_URL}/api/RecurringInvoice/${id}/pause`, {
+      await fetch(`${API_BASE}/api/RecurringInvoice/${id}/pause`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -607,7 +607,7 @@ const updateItem = (index, field, value) => {
       showNotification('Recurring invoice paused successfully', 'success');
     } else {
       // 🔹 Reactivate recurring invoice
-      await fetch(`${import.meta.env.VITE_API_URL}/api/RecurringInvoice/${id}/resume`, {
+      await fetch(`${API_BASE}/api/RecurringInvoice/${id}/resume`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -886,7 +886,7 @@ const updateItem = (index, field, value) => {
                         placeholder="Search Customer by name or ID"
                         value={selectedCustomer}
                         fetchData={async (query) => {
-                          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Customer/search?query=${encodeURIComponent(query)}`);
+                          const res = await fetch(`${API_BASE}/api/Customer/search?query=${encodeURIComponent(query)}`);
                           return await res.json(); // array of { id, name, email }
                         }}
                         getOptionLabel={(customer) => `${customer.name}`}

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Edit2, Trash2, Plus, Tag as TagIcon } from 'lucide-react';
 import axios from 'axios';
+import {API_BASE} from "../config/api"
 
 export function AddTagModal({ isOpen, onClose, onSaved }) {
   const [name, setName] = useState('');
@@ -17,7 +18,7 @@ export function AddTagModal({ isOpen, onClose, onSaved }) {
     
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/ProductTag/GetTagByUserId?userId=${userId}`,
+        `${API_BASE}/api/ProductTag/GetTagByUserId?userId=${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTags(res.data);
@@ -42,14 +43,14 @@ export function AddTagModal({ isOpen, onClose, onSaved }) {
       if (editingId) {
         // Update tag
         await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/ProductTag/${editingId}`,
+          `${API_BASE}/api/ProductTag/${editingId}`,
           { id: editingId, name },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         // Create tag
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/ProductTag`,
+          `${API_BASE}/api/ProductTag`,
           { name },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -72,7 +73,7 @@ export function AddTagModal({ isOpen, onClose, onSaved }) {
     if (!window.confirm("Are you sure you want to delete this tag?")) return;
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/ProductTag/${id}`,
+        `${API_BASE}/api/ProductTag/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchTags();

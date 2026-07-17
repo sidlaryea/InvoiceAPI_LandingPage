@@ -1,5 +1,6 @@
 import { X, Eye, Edit } from "lucide-react";
 import { useState } from "react";
+import {API_BASE} from "../../config/api";
 
 export default function ViewExpense({ isOpen, expense, onClose, expenseCategories, getStatusElement, onEdit }) {
   const [showReceiptViewer, setShowReceiptViewer] = useState(false);
@@ -155,7 +156,7 @@ function ReceiptViewerModal({ receiptUrl, onClose }) {
         <div className="h-full">
           {receiptUrl ? (
             <img
-              src={`${import.meta.env.VITE_API_URL}/${receiptUrl.replace(/\\/g, '/')}`}
+              src={`${API_BASE}/${receiptUrl.replace(/\\/g, '/')}`}
               alt="Receipt"
               className="w-full h-full object-contain"
             />

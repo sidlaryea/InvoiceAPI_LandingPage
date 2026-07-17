@@ -16,7 +16,7 @@ export function AddCategoryModal({ isOpen, onClose, onSaved }) {
   const fetchCategories = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/ProductCategory/user/${userId}`,
+        `${API_BASE}/api/ProductCategory/user/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCategories(res.data);
@@ -40,14 +40,14 @@ export function AddCategoryModal({ isOpen, onClose, onSaved }) {
       if (editingId) {
         // Update category
         await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/ProductCategory/${editingId}`,
+          `${API_BASE}/api/ProductCategory/${editingId}`,
           { id:editingId, name },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         // Create new category
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/ProductCategory`,
+          `${API_BASE}/api/ProductCategory`,
           { name },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -68,7 +68,7 @@ export function AddCategoryModal({ isOpen, onClose, onSaved }) {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/ProductCategory/${id}`,
+        `${API_BASE}/api/ProductCategory/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchCategories();

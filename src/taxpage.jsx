@@ -97,7 +97,7 @@ const fetchCurrencies = async () => {
     formDataUpload.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formDataUpload, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formDataUpload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -129,7 +129,7 @@ const fetchCurrencies = async () => {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-password`,
+        `${API_BASE}/api/Register/update-password`,
         {
           currentPassword,
           newPassword,
@@ -152,11 +152,11 @@ const fetchCurrencies = async () => {
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("jwtToken");
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, "/")}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -164,7 +164,7 @@ const fetchCurrencies = async () => {
 
   const fetchUserDefaultCurrency = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`, {
+      const response = await axios.get(`${API_BASE}/api/TaxComponent/ByUser`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -180,7 +180,7 @@ const fetchCurrencies = async () => {
 
   const fetchTaxRates = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`, {
+    const response = await axios.get(`${API_BASE}/api/TaxComponent/ByUser`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
       },
@@ -336,7 +336,7 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
       }
 
       try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/api/TaxComponent/${id}`, {
+        await axios.delete(`${API_BASE}/api/TaxComponent/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

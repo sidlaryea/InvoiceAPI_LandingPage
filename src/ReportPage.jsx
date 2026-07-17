@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
+import {API_BASE} from "./config/api"
 
 export default function ReportPage() {
   const [selectedReport, setSelectedReport] = useState("");
@@ -46,7 +47,7 @@ export default function ReportPage() {
     formDataUpload.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formDataUpload, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formDataUpload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -78,7 +79,7 @@ export default function ReportPage() {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-password`,
+        `${API_BASE}/api/Register/update-password`,
         {
           currentPassword,
           newPassword,
@@ -101,11 +102,11 @@ export default function ReportPage() {
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("jwtToken");
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, "/")}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -151,7 +152,7 @@ export default function ReportPage() {
       if (filters.startDate) params.append("startDate", filters.startDate);
       if (filters.endDate) params.append("endDate", filters.endDate);
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/Reports?${params.toString()}`, {
+      const response = await axios.get(`${API_BASE}/api/Reports?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },

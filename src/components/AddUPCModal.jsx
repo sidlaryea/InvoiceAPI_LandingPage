@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import axios from 'axios';
+import {API_BASE} from "../config/api"
 
 export function AddUPCModal({ isOpen, onClose, onSaved }) {
   const [code, setCode] = useState('');
@@ -12,7 +13,7 @@ export function AddUPCModal({ isOpen, onClose, onSaved }) {
     setLoading(true);
     const token = localStorage.getItem("jwtToken");
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/upcs`, { code }, {
+      await axios.post(`${API_BASE}/api/upcs`, { code }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCode('');

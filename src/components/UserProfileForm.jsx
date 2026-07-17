@@ -6,6 +6,7 @@ import {   Dialog,
   DialogActions,
   Button,
   TextField,} from "@mui/material";
+  import {API_BASE} from "../config/api"
 
 
 const UserProfileForm = ({ onClose }) => {
@@ -23,7 +24,7 @@ const UserProfileForm = ({ onClose }) => {
       const apiKey = localStorage.getItem("api");
 
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/Register/profile`,
+        `${API_BASE}/api/Register/profile`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -53,7 +54,7 @@ const UserProfileForm = ({ onClose }) => {
     const apiKey = localStorage.getItem("api");
 
     const res = await axios.put(
-      `${import.meta.env.VITE_API_URL}/api/Register/UpdateUserDetails`,
+      `${API_BASE}/api/Register/UpdateUserDetails`,
       formData,
       {
         headers: {

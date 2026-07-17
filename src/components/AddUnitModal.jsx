@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Package,Edit3,Trash2 } from 'lucide-react';
 import axios from 'axios';
+import {API_BASE} from "../config/api"
 
 export function AddUnitModal({ isOpen, onClose, onSaved }) {
   const [name, setName] = useState('');
@@ -32,7 +33,7 @@ export function AddUnitModal({ isOpen, onClose, onSaved }) {
     const token = localStorage.getItem("jwtToken");
     const userId = localStorage.getItem("userId");
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/ProductUnit/user/${userId}`, {
+      const res = await axios.get(`${API_BASE}/api/ProductUnit/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUnits(res.data);
@@ -51,13 +52,13 @@ export function AddUnitModal({ isOpen, onClose, onSaved }) {
     try {
         if (editingId){
           //Update unit
-          await axios.put(`${import.meta.env.VITE_API_URL}/api/ProductUnit/${editingId}`, 
+          await axios.put(`${API_BASE}/api/ProductUnit/${editingId}`, 
         { id:editingId,name, unitCode, description, isActive }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
         }else{
             //create New unit
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/ProductUnit`, 
+          await axios.post(`${API_BASE}/api/ProductUnit`, 
         { name, unitCode, description, isActive }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );}
@@ -83,7 +84,7 @@ export function AddUnitModal({ isOpen, onClose, onSaved }) {
     if (!window.confirm("Are you sure you want to delete this Unit Of Measure?")) return;
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/ProductUnit/${id}`,
+        `${API_BASE}/api/ProductUnit/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchUnits();

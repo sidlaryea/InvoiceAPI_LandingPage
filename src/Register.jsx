@@ -65,7 +65,7 @@ const getFlagEmoji = (countryCode) => {
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Register`, {
+      const res = await fetch(`${API_BASE}/api/Register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

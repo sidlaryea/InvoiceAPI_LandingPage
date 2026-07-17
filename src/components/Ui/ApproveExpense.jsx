@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import axios from "axios";
+import { API_BASE } from "../../config/api";
 
 export default function ApproveExpense({ isOpen, expense, onClose, onStatusUpdate }) {
   const [selectedStatus, setSelectedStatus] = useState(expense?.expenseStatus ?? expense?.status ?? 0);
@@ -59,7 +60,7 @@ export default function ApproveExpense({ isOpen, expense, onClose, onStatusUpdat
       };
 
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Expense/updateExpense`,
+        `${API_BASE}/api/Expense/updateExpense`,
         updateBody,
         {
           headers: {

@@ -515,7 +515,7 @@ const handleSendInvoiceEmail = async (invoiceId) => {
     const token = localStorage.getItem("jwtToken");
     
     const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/Email/${invoiceId}/send-email`, // Adjust to your API route
+      `${API_BASE}/api/Email/${invoiceId}/send-email`, // Adjust to your API route
       {},
       {
         headers: {
@@ -798,7 +798,7 @@ useApiInterceptor();
                         placeholder="Search Customer by name or ID"
                         value={selectedCustomer}
                         fetchData={async (query) => {
-                          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Customer/search?query=${encodeURIComponent(query)}`);
+                          const res = await fetch(`${API_BASE}/api/Customer/search?query=${encodeURIComponent(query)}`);
                           return await res.json(); // array of { id, name }
                         }}
                         getOptionLabel={(customer) => `${customer.name} `}

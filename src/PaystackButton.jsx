@@ -1,6 +1,7 @@
 import React from "react";
 import jwtDecode from "jwt-decode";
 import usePaystackScript from "@/hooks/usePaystackScript"; // adjust path
+import { API_BASE } from "./config/api";
 
 const PaystackButton = ({ invoice, onSuccess, onError }) => {
   const scriptLoaded = usePaystackScript();
@@ -26,7 +27,7 @@ const PaystackButton = ({ invoice, onSuccess, onError }) => {
 
       // 1. Fetch merchant Paystack setup
       const setupRes = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/PaymentSetup/me`,
+        `${API_BASE}/api/PaymentSetup/me`,
         {
           method: "GET",
           headers: {
@@ -61,7 +62,7 @@ const PaystackButton = ({ invoice, onSuccess, onError }) => {
         onSuccess: async () => {
           try {
             const res = await fetch(
-              `${import.meta.env.VITE_API_URL}/api/Payment/verify`,
+              `${API_BASE}/api/Payment/verify`,
               {
                 method: "POST",
                 headers: {

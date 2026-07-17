@@ -181,7 +181,7 @@ export default function ExpensesPage() {
     }
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-password`, {
+      await axios.put(`${API_BASE}/api/Register/update-password`, {
         currentPassword,
         newPassword,
         confirmPassword: newPassword,
@@ -206,11 +206,11 @@ export default function ExpensesPage() {
     const token = localStorage.getItem("jwtToken");
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, '/')}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -274,7 +274,7 @@ export default function ExpensesPage() {
     }
 
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/Expense/${id}?softDelete=true`, {
+      await axios.delete(`${API_BASE}/api/Expense/${id}?softDelete=true`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -323,7 +323,7 @@ export default function ExpensesPage() {
         formDataUpload.append("paymentMethod", expenseData.paymentMethod);
         formDataUpload.append("receiptFile", selectedFile); // Assuming API expects "receipt" as key
 
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/Expense`, formDataUpload, {
+        await axios.post(`${API_BASE}/api/Expense`, formDataUpload, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -332,7 +332,7 @@ export default function ExpensesPage() {
         });
       } else {
         // JSON payload
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/Expense`, expenseData, {
+        await axios.post(`${API_BASE}/api/Expense`, expenseData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -358,7 +358,7 @@ export default function ExpensesPage() {
       // Refetch expenses to update the list
       const fetchExpenses = async () => {
         try {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Expense/by-user`, {
+          const res = await axios.get(`${API_BASE}/api/Expense/by-user`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setExpenses(res.data);
@@ -378,7 +378,7 @@ export default function ExpensesPage() {
     const fetchExpenses = async () => {
       const token = localStorage.getItem("jwtToken");
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Expense/by-user`, {
+        const res = await axios.get(`${API_BASE}/api/Expense/by-user`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setExpenses(res.data);
@@ -395,7 +395,7 @@ export default function ExpensesPage() {
     const token = localStorage.getItem("jwtToken");
     if (!token) return;
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/ExpenseCategory/active`, {
+      const res = await axios.get(`${API_BASE}/api/ExpenseCategory/active`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setExpenseCategories(res.data);

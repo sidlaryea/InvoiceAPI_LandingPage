@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import {API_BASE} from "../config/api"
 
 const PaymentVerify = () => {
   const [searchParams] = useSearchParams();
@@ -23,7 +24,7 @@ const PaymentVerify = () => {
         const token = localStorage.getItem("token");
 
         const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/payment/verify/${reference}`,
+          `${API_BASE}/api/payment/verify/${reference}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
