@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import DashboardLayout from "./components/DashboardLayout";
 import axios from "axios";
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
+import {API_BASE} from "./config/api"
 
 import {
   LineChart,
@@ -51,7 +52,7 @@ export default function InvoiceDashboardPage() {
     formData.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -75,7 +76,7 @@ export default function InvoiceDashboardPage() {
     const apiKey = localStorage.getItem("apiKey");
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/Invoice/GetInvoicesByUserId`,
+        `${API_BASE}/api/Invoice/GetInvoicesByUserId`,
         {
           headers: { Authorization: `Bearer ${token}`
           , "X-API-KEY": apiKey
@@ -94,7 +95,7 @@ export default function InvoiceDashboardPage() {
     const token = localStorage.getItem("jwtToken");
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/Expense/by-user`,
+        `${API_BASE}/api/Expense/by-user`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log("Fetched expenses:", res.data); // Debug log
@@ -109,12 +110,12 @@ export default function InvoiceDashboardPage() {
     const token = localStorage.getItem("jwtToken");
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/Register/profile`,
+        `${API_BASE}/api/Register/profile`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const { profileImageUrl } = res.data;
       setProfileImageUrl(
-        `${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, "/")}`
+        `${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`
       );
     } catch (err) {
       console.error("Failed to fetch user profile", err);
@@ -125,7 +126,7 @@ export default function InvoiceDashboardPage() {
   // 🔹 Fetch Currencies
   const fetchCurrencies = async () => {
     try {
-      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const res = await axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`);
       const mappedCurrencies = res.data.map(c => ({
         id: c.id,
         code: c.currencyCode,
@@ -165,7 +166,7 @@ export default function InvoiceDashboardPage() {
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace("/InvoiceAPI_LandingPage/login");
+    window.location.replace("/login");
   };
 
   // 🔹 KPI Calculations
