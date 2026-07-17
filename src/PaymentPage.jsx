@@ -7,6 +7,7 @@ import { ensurePaystack } from "./Utils/ensurePaystack";
 import ReceiptViewer from "./components/Ui/ReceiptViewer";
 import { formatNumber } from "./Utils/formatNumber";
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
+import { API_BASE } from "./config/api";
 
 
 
@@ -459,7 +460,7 @@ const fetchTransactions = async () => {
 
 const fetchCurrencies = async () => {
   try {
-    const response = await fetch("http://localhost:5214/api/Currency/GetAllCurrencies", {
+    const response = await fetch(`${API_BASE}/api/Currency/GetAllCurrencies`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -481,7 +482,7 @@ const fetchCurrencies = async () => {
 const fetchPaymentSetup = async () => {
   try {
     const token = localStorage.getItem("jwtToken");
-    const response = await fetch("http://localhost:5214/api/PaymentSetup/Get User Payment Setup", {
+    const response = await fetch(`${API_BASE}/api/PaymentSetup/Get User Payment Setup`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

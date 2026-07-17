@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 
 import { useNavigate } from "react-router-dom";
 import AddTaxRateModal from "./components/AddTaxRateModal";
+import { API_BASE } from "./config/api";
 
 
 export default function CompleteSetup() {
@@ -145,7 +146,7 @@ export default function CompleteSetup() {
       logoData.append("file", logo);
 
       const uploadLogoResponse = await axios.post(
-        "http://localhost:5214/api/BusinessInfo/upload-logo",
+        `${API_BASE}/api/BusinessInfo/upload-logo`,
         logoData,
         {
           headers: {
@@ -174,7 +175,7 @@ export default function CompleteSetup() {
       userId
     };
 
-     await axios.post("http://localhost:5214/api/BusinessInfo", businessInfoPayload, {
+     await axios.post(`${API_BASE}/api/BusinessInfo`, businessInfoPayload, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -191,7 +192,7 @@ export default function CompleteSetup() {
       updatedAt: new Date().toISOString()
     };
 
-    await axios.post("http://localhost:5214/api/BrandingDetails/Create Brand", brandingPayload, {
+    await axios.post(`${API_BASE}/api/BrandingDetails/Create Brand`, brandingPayload, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -210,7 +211,7 @@ export default function CompleteSetup() {
         isActive: taxRate.status === 'Active',
         productCurrencyId
       };
-      await axios.post("http://localhost:5214/api/TaxComponent", taxRatePayload, {
+      await axios.post(`${API_BASE}/api/TaxComponent`, taxRatePayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
     }
@@ -234,7 +235,7 @@ export default function CompleteSetup() {
         updatedAt: new Date().toISOString()
       };
 
-      await axios.post("http://localhost:5214/api/PaymentSetup/Save User Payment Setup", paymentPayload, {
+      await axios.post(`${API_BASE}/api/PaymentSetup/Save User Payment Setup`, paymentPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
     }
@@ -253,7 +254,7 @@ if (stripeEnabled) {
   };
 
   await axios.post(
-    "http://localhost:5214/api/PaymentSetup/Save User Payment Setup",
+    `${API_BASE}/api/PaymentSetup/Save User Payment Setup`,
     stripePayload,
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -271,7 +272,7 @@ if (stripeEnabled) {
 
 
   useEffect(() => {
-    axios.get("http://localhost:5214/api/Industries")
+    axios.get(`${API_BASE}/api/Industries`)
       .then((res) => {
         const sortedIndustries = res.data.sort((a, b) => a.name.localeCompare(b.name));
         setIndustries(sortedIndustries);
@@ -280,7 +281,7 @@ if (stripeEnabled) {
   }, []);
 
   useEffect(() => {
-    axios.get("http://localhost:5214/api/Country")
+    axios.get(`${API_BASE}/api/Country`)
       .then((res) => {
         const sortedCountries = res.data.sort((a, b) => a.name.localeCompare(b.name));
         setCountries(sortedCountries);
@@ -289,7 +290,7 @@ if (stripeEnabled) {
   }, []);
 
   useEffect(() => {
-    axios.get("http://localhost:5214/api/Currency/GetAllCurrencies")
+    axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`)
       .then((res) => {
         const activeCurrencies = res.data.filter(c => c.isActive);
         setCurrencies(activeCurrencies);

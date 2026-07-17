@@ -6,6 +6,7 @@ import AutocompleteSearch from './components/AutocompleteSearch';
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 import SuccessModal from "./components/Ui/SuccessModal";
 //import { toast } from "react-hot-toast";
+import { API_BASE } from "./config/api";
 
 export default function RecurringInvoicePage() {
   const [formData, setFormData] = useState({
@@ -280,7 +281,7 @@ const [currencies, setCurrencies] = useState([]);
 // 🔹 Fetch Currencies
   const fetchCurrencies = async () => {
     try {
-      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const res = await axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`);
       const mappedCurrencies = res.data.map(c => ({
         id: c.id,
         code: c.currencyCode,

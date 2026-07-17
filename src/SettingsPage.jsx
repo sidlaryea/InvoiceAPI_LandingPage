@@ -391,7 +391,7 @@ const uploadLogo = async (file) => {
             // Construct full URL for logo if it's a relative path
             let logoPath = response.data.logoFilePath || '';
             if (logoPath && !logoPath.startsWith('http')) {
-              logoPath = `http://localhost:5214${logoPath}`;
+              logoPath = `${API_BASE}${logoPath}`;
             }
 
             setFormData(prev => ({

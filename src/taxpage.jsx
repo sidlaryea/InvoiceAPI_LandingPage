@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Plus, Edit2, Trash2, Check, X, Star } from "lucide-react";
 import DashboardLayout from "./components/DashboardLayout";
+import { API_BASE } from "./config/api";
 export default function TaxRatesPage() {
   const [selectedCurrency, setSelectedCurrency] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -68,7 +69,7 @@ export default function TaxRatesPage() {
 useEffect(() => {
 const fetchCurrencies = async () => {
     try {
-      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const res = await axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`);
 
       const mappedCurrencies = res.data.map(c => ({
         id: c.id,

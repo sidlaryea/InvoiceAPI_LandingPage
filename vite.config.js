@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import {API_BASE} from "./config/api"
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/Profile-images': {
-        target: 'http://localhost:5214',
+        target: `${API_BASE}`,
         changeOrigin: true,
         secure: false,
       },

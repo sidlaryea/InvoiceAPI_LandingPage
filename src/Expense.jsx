@@ -6,6 +6,7 @@ import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 import AddCategoryModal from "./components/AddExpenseCategoryModal";
 import ViewExpense from "./components/Ui/ViewExpense";
 import ApproveExpense from "./components/Ui/ApproveExpense";
+import { API_BASE } from "./config/api";
 
 export default function ExpensesPage() {
   // State for profile image and dialogs
@@ -148,7 +149,7 @@ export default function ExpensesPage() {
     formDataUpload.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formDataUpload, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formDataUpload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -405,7 +406,7 @@ export default function ExpensesPage() {
 
   const fetchCurrencies = async () => {
     try {
-      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const res = await axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`);
       //console.log("Currencies fetched:", res.data);
       setCurrencies(res.data);
     } catch (err) {

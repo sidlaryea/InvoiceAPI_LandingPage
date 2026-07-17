@@ -474,7 +474,7 @@ const handleDownloadPDF = async (id) => {
       return;
     }
 
-    const response = await fetch(`http://localhost:5214/api/ExportPdf/${id}/export-pdf`, {
+    const response = await fetch(`${API_BASE}/api/ExportPdf/${id}/export-pdf`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

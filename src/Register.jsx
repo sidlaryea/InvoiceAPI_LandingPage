@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 //import Onboarding from './components/Onboarding'; // Adjust the import path as necessary
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from "./config/api";
 
 function Register() {
   const [form, setForm] = useState({ firstName: '', middleName: '', lastName: '', email: '', countryId:'', username: '', password: '',role: 'User', 
@@ -20,7 +21,7 @@ function Register() {
     
 
  useEffect(() => {
-  axios.get("http://localhost:5214/api/Country")
+  axios.get(`${API_BASE}/api/Country`)
     .then((res) => {
       const sortedCountries = res.data.sort((a, b) =>
         a.name.localeCompare(b.name)
