@@ -12,6 +12,7 @@ import {
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE } from "../config/api"
 
 export default function InvoiceApiRegisterModal() {
   const navigate = useNavigate();
@@ -127,9 +128,8 @@ export default function InvoiceApiRegisterModal() {
 
                <GoogleLogin
   onSuccess={async (credentialResponse) => {
-    const API_URL = import.meta.env.VITE_API_URL;
     const result = await axios.post(
-      `${API_URL}/api/Login/google-login`,
+      `${API_BASE}/api/Login/google-login`,
       {
         idToken: credentialResponse.credential,
       }
@@ -151,7 +151,7 @@ localStorage.setItem("countryCode", decodedToken.CountryCode);
  const token = localStorage.getItem("jwtToken");
      // Fetch API key info
             const apiRes = await axios.get(
-              `${import.meta.env.VITE_API_URL}/api/ApiKey`,
+              `${API_BASE}/api/ApiKey`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,

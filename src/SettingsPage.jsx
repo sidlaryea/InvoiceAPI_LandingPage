@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from './components/DashboardLayout';
 import toast from 'react-hot-toast';
+import {API_BASE} from "./config/api"
 
 const TabPanel = ({ children, value, index }) => (
   <div className={`${value !== index ? 'hidden' : ''}`}>
@@ -195,7 +196,7 @@ const uploadLogo = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/BusinessInfo/update-logo`, {
+  const response = await fetch(`${API_BASE}/api/BusinessInfo/update-logo`, {
     method: "PUT",
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -230,7 +231,7 @@ const uploadLogo = async (file) => {
 
       switch (section) {
         case 'Profile':
-          endpoint = 'http://localhost:5214/api/Register/UpdateUserDetails';
+          endpoint = `${API_BASE}/api/Register/UpdateUserDetails`;
           data = {
             firstName: formData.firstName,
             middleName: formData.middleName,
@@ -242,7 +243,7 @@ const uploadLogo = async (file) => {
           break;
 
         case 'Business':
-          endpoint = 'http://localhost:5214/api/BusinessInfo';
+          endpoint = `${API_BASE}/api/BusinessInfo`;
           data = {
             businessName: formData.businessName,
             email: formData.businessEmail,
@@ -255,7 +256,7 @@ const uploadLogo = async (file) => {
           };
           break;
         case 'Branding':
-          endpoint = 'http://localhost:5214/api/BrandingDetails/Update Brand';
+          endpoint = `${API_BASE}/api/BrandingDetails/Update Brand`;
           data = {
             defaultInvoicePrefix: formData.defaultInvoicePrefix,
             paymentTerms: formData.paymentTerms,
@@ -263,7 +264,7 @@ const uploadLogo = async (file) => {
           };
           break;
         case 'Payment Setup':
-          endpoint = 'http://localhost:5214/api/PaymentSetup/Update User Payment Setup';
+          endpoint = `${API_BASE}/api/PaymentSetup/Update User Payment Setup`;
           data = {
             payStackPublicKey: formData.payStackPublicKey,
             payStackSecretkey: formData.payStackSecretkey,
@@ -282,13 +283,13 @@ const uploadLogo = async (file) => {
           break;
 
           case 'Api':
-          endpoint = 'http://localhost:5214/api/ApiKey/';
+          endpoint = `${API_BASE}/api/ApiKey/`;
           data = {
              key: formData.apiKey
           };
           break;
           case 'Security':
-          endpoint = 'http://localhost:5214/api/Register/update-password';
+          endpoint = `${API_BASE}/api/Register/update-password`;
           data = {
             currentPassword: formData.currentPassword,
             newPassword: formData.newPassword,
@@ -323,7 +324,7 @@ const uploadLogo = async (file) => {
   };
 
    useEffect(() => {
-  axios.get("http://localhost:5214/api/Country")
+  axios.get(`${API_BASE}/api/Country`)
     .then((res) => {
       const sortedCountries = res.data.sort((a, b) =>
         a.name.localeCompare(b.name)
@@ -334,7 +335,7 @@ const uploadLogo = async (file) => {
 }, []);
 
  useEffect(() => {
-    axios.get("http://localhost:5214/api/Industries")
+    axios.get(`${API_BASE}/api/Industries`)
       .then((res) => {
         const sortedIndustries = res.data.sort((a, b) => a.name.localeCompare(b.name));
         setIndustries(sortedIndustries);
@@ -350,7 +351,7 @@ const uploadLogo = async (file) => {
       try {
         const token = localStorage.getItem('jwtToken');
         if (token) {
-          const response = await axios.get('http://localhost:5214/api/Register/profile', {
+          const response = await axios.get(`${API_BASE}/api/Register/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -381,7 +382,7 @@ const uploadLogo = async (file) => {
       try {
         const token = localStorage.getItem('jwtToken');
         if (token) {
-          const response = await axios.get('http://localhost:5214/api/BusinessInfo', {
+          const response = await axios.get(`${API_BASE}/api/BusinessInfo`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -420,7 +421,7 @@ const uploadLogo = async (file) => {
       try {
         const token = localStorage.getItem('jwtToken');
         if (token) {
-          const response = await axios.get('http://localhost:5214/api/BrandingDetails/Get User Brand', {
+          const response = await axios.get(`${API_BASE}/api/BrandingDetails/Get User Brand`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -447,7 +448,7 @@ const uploadLogo = async (file) => {
       try {
         const token = localStorage.getItem('jwtToken');
         if (token) {
-          const response = await axios.get('http://localhost:5214/api/PaymentSetup/Get User Payment Setup', {
+          const response = await axios.get(`${API_BASE}/api/PaymentSetup/Get User Payment Setup`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -528,7 +529,7 @@ const uploadLogo = async (file) => {
       formData.append("imageFile", selectedFile);
   
       try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+        await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data"
@@ -566,7 +567,7 @@ const uploadLogo = async (file) => {
     }
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-password`, {
+      await axios.put(`${API_BASE}/api/Register/update-password`, {
         currentPassword,
         newPassword,
         confirmPassword: confirmNewPassword,
@@ -587,11 +588,11 @@ const uploadLogo = async (file) => {
     const token = localStorage.getItem("jwtToken");
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, '/')}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -605,7 +606,7 @@ const uploadLogo = async (file) => {
     // Handle sign out logic
     console.log('Signing out...');
     localStorage.clear ();
-    window.location.href = "/InvoiceAPI_LandingPage/login";
+    window.location.href = "/login";
   };
 
   //Fetch API Billing Information//
@@ -615,7 +616,7 @@ const token = localStorage.getItem("jwtToken");
 try {
         
         if (token) {
-          const response = await axios.get('http://localhost:5214/api/ApiKey', {
+          const response = await axios.get(`${API_BASE}/api/ApiKey`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -654,7 +655,7 @@ const handlePaymentSubmit = async (selectedPlan) => {
     const token = localStorage.getItem("token");
 
     const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/Payment/initialize`,
+      `${API_BASE}/api/Payment/initialize`,
       {
         email: formData.businessEmail,
         amount: selectedPlan.price * 100, // Paystack expects amount in kobo/pesewas

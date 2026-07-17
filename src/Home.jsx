@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import RegisterModalHost from './components/Ui/RegisterModalHost';  
 
 
+
 function Home() {
   // const [isPlaying, setIsPlaying] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

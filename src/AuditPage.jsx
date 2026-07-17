@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import DashboardLayout from "./components/DashboardLayout";
+import {API_BASE} from "./config/api"
 
 export default function AuditPage() {
   const [auditData, setAuditData] = useState([]);
@@ -46,7 +47,7 @@ export default function AuditPage() {
     formDataUpload.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formDataUpload, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formDataUpload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -78,7 +79,7 @@ export default function AuditPage() {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/Register/update-password`,
+        `${API_BASE}/api/Register/update-password`,
         {
           currentPassword,
           newPassword,
@@ -101,11 +102,11 @@ export default function AuditPage() {
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("jwtToken");
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, "/")}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -120,7 +121,7 @@ export default function AuditPage() {
       if (filters.endDate) params.append("endDate", filters.endDate);
       if (filters.type) params.append("type", filters.type);
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/Audit?${params.toString()}`, {
+      const response = await axios.get(`${API_BASE}/api/Audit?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -156,7 +157,7 @@ export default function AuditPage() {
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace("/InvoiceAPI_LandingPage/login");
+    window.location.replace("/login");
   };
 
   return (

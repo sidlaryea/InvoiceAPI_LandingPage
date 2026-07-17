@@ -6,6 +6,8 @@ import AutocompleteSearch from './components/AutocompleteSearch';
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 import SuccessModal from "./components/Ui/SuccessModal";
 import { toast } from "react-hot-toast";
+import {API_BASE} from "./config/api"
+
 
 
 export default function GenerateInvoicePage() {
@@ -31,7 +33,7 @@ const fetchInvoices = async () => {
   try {
     const apiKey = localStorage.getItem("apiKey"); // Include this if your API requires auth
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Invoice/GetInvoicesByUserId`, {
+    const res = await fetch(`${API_BASE}/api/Invoice/GetInvoicesByUserId`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
@@ -124,7 +126,7 @@ const getFlagEmoji = (code) => {
     formData.append("imageFile", selectedFile);
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-profile-image`, formData, {
+      await axios.put(`${API_BASE}/api/Register/update-profile-image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -155,7 +157,7 @@ if (!token) {
 }
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/Register/update-password`, {
+      await axios.put(`${API_BASE}/api/Register/update-password`, {
         currentPassword,
         newPassword,
         confirmPassword: newPassword,
@@ -176,13 +178,13 @@ if (!token) {
     const token = localStorage.getItem("jwtToken");
     
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/Register/profile`, {
+      const res = await axios.get(`${API_BASE}/api/Register/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(`${import.meta.env.VITE_API_URL}/${profileImageUrl.replace(/\\/g, '/')}`);
+      setProfileImageUrl(`${API_BASE}/${profileImageUrl.replace(/\\/g, '/')}`);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
@@ -192,7 +194,7 @@ if (!token) {
   ///////Fetch taxes By User////////////
   const fetchTaxesByUser = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/TaxComponent/ByUser`, {
+      const res = await fetch(`${API_BASE}/api/TaxComponent/ByUser`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`
         }
@@ -209,7 +211,7 @@ if (!token) {
   // 🔹 Fetch Currencies
   const fetchCurrencies = async () => {
     try {
-      const res = await axios.get("http://localhost:5214/api/Currency/GetAllCurrencies");
+      const res = await axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`);
       const mappedCurrencies = res.data.map(c => ({
         id: c.id,
         code: c.currencyCode,
@@ -274,7 +276,7 @@ const fetchProducts = async (query) => {
   if (!query) return [];
 
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Product/search?query=${encodeURIComponent(query)}`);
+    const res = await fetch(`${API_BASE}/api/Product/search?query=${encodeURIComponent(query)}`);
     return await res.json(); // expected: array of { id, name, price, description }
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -329,7 +331,7 @@ console.log("selectedInvoice", selectedInvoice);
       status: formData.status,
     };
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Invoice`, {
+    const response = await fetch(`${API_BASE}/api/Invoice`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",

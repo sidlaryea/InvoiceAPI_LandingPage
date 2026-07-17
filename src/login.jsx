@@ -2,104 +2,89 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
 import { GoogleLogin } from "@react-oauth/google";
-import {API_BASE} from "./config/api"
-
-
+import { API_BASE } from "./config/api";
 
 export default function Login() {
-  const [email, setemail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
-  
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
 
     try {
-      const response = await axios.post(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Login/login`, {
+      const response = await axios.post(`${API_BASE}/api/Login/login`, {
         email,
         password,
       });
 
+      const { token, invoiceSetupComplete } = response.data;
 
-      
+      if (!token) {
+        setError("Invalid login response.");
+        return;
+      }
 
-      const {token,invoiceSetupComplete} = response.data;
-      
-      if (token) {
-        localStorage.setItem("jwtToken", token);
-        const decodedToken = jwtDecode(token);
-        console.log("Decoded JWT:", decodedToken);
+      localStorage.setItem("jwtToken", token);
+      const decodedToken = jwtDecode(token);
 
-        // Decode token to get userId
-        
-        const userId = decodedToken.userId; // or whatever field contains the user ID
-        const country = decodedToken.CountryName;
-        const countryCode=decodedToken.CountryCode;
-        const firstname=decodedToken.FirstName;
-        localStorage.setItem("country",country)
-        localStorage.setItem("countryCode",countryCode)
-        localStorage.setItem("userId", userId);
-        localStorage.setItem("firstname",firstname);
-        localStorage.setItem("token", token); // Store token for authenticated requests
-        
-        
-        
-         // Fetch API key info
-      const apiRes = await axios.get(
-          `https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/ApiKey`,
+      const userId = decodedToken.userId;
+      const country = decodedToken.CountryName;
+      const countryCode = decodedToken.CountryCode;
+      const firstname = decodedToken.FirstName;
 
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        // console.log("Full API Key Response:", apiRes.data);
-        
-        const apiKey = apiRes.data.key;
-        if (!apiKey) {
-        console.warn("API key missing in response.");
+      localStorage.setItem("country", country);
+      localStorage.setItem("countryCode", countryCode);
+      localStorage.setItem("userId", userId);
+      localStorage.setItem("firstname", firstname);
+      localStorage.setItem("token", token);
+
+      // Fetch API key info
+      const apiRes = await axios.get(`${API_BASE}/api/ApiKey`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const apiKey = apiRes.data?.key;
+      if (!apiKey) {
         setError("API key not returned.");
         return;
       }
 
       localStorage.setItem("apiKey", apiKey);
-      localStorage.setItem("setupComplete", invoiceSetupComplete ? "true" : "false");
+      localStorage.setItem(
+        "setupComplete",
+        invoiceSetupComplete ? "true" : "false"
+      );
 
-
-        if (invoiceSetupComplete) {
+      if (invoiceSetupComplete) {
         navigate("/dashboard");
       } else {
         navigate("/complete-setup");
       }
-      } else {
-        setError("Invalid login response.");
-      }
-    } catch (error) {
+    } catch (err) {
       setError("Login failed. Check your credentials.");
-      console.error("Login error:", error);
+      console.error("Login error:", err);
     }
   };
 
-  //Trigger Google Login Method
   const triggerGoogleLogin = async (credentialResponse) => {
     try {
       setError("");
 
-      //const API_URL = import.meta.env.VITE_API_URL;
-      const result = await axios.post(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/Login/google-login`, {
-        idToken: credentialResponse.credential,
-      });
-
+      const result = await axios.post(
+        `${API_BASE}/api/Login/google-login`,
+        {
+          idToken: credentialResponse.credential,
+        }
+      );
 
       const decodedToken = jwtDecode(result.data.token);
 
@@ -113,16 +98,15 @@ export default function Login() {
 
       const token = localStorage.getItem("jwtToken");
 
-      const apiRes = await axios.get(`https://invoiceapi-gcc3duhbc4age6bw.southafricanorth-01.azurewebsites.net/api/ApiKey`, {
+      const apiRes = await axios.get(`${API_BASE}/api/ApiKey`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      const apiKey = apiRes.data.key;
+      const apiKey = apiRes.data?.key;
       if (!apiKey) {
-        console.warn("API key missing in response.");
         setError("API key not returned.");
         return;
       }
@@ -140,25 +124,31 @@ export default function Login() {
     }
   };
 
+  useApiInterceptor();
 
-  useApiInterceptor(); // Initialize the API interceptor
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8" align="center">
+      <div
+        className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8"
+        align="center"
+      >
         <img src="./logo.png" alt="Logo" className="h-12 w-12 mb-2" />
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Sign in to InvoiceAPI
         </h2>
+
         {error && (
           <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
             {error}
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="text" className="block text-sm font-medium text-gray-600">
-              
-            </label>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-600"
+            ></label>
             <input
               type="text"
               id="email"
@@ -166,14 +156,16 @@ export default function Login() {
               required
               value={email}
               placeholder="Email"
-              onChange={(e) => setemail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600">
-              
-            </label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-600"
+            ></label>
             <input
               type="password"
               id="password"
@@ -185,7 +177,6 @@ export default function Login() {
             />
           </div>
 
-          
           <div className="relative flex items-center my-6">
             <div className="flex-grow border-t border-gray-300"></div>
             <span className="px-3 text-sm text-gray-400">OR</span>
@@ -194,7 +185,9 @@ export default function Login() {
 
           <div id="googleButton" className="block text-sm font-medium text-gray-600">
             <GoogleLogin
-              onSuccess={(credentialResponse) => triggerGoogleLogin(credentialResponse)}
+              onSuccess={(credentialResponse) =>
+                triggerGoogleLogin(credentialResponse)
+              }
               onError={() => {
                 console.log("Login Failed");
                 setError("Google login failed.");
@@ -213,8 +206,6 @@ export default function Login() {
             />
           </div>
 
-
-
           <button
             type="submit"
             className="w-full py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition cursor-pointer"
@@ -222,13 +213,24 @@ export default function Login() {
             Sign In
           </button>
         </form>
+
         <p className="text-center text-sm text-gray-500 mt-6">
-          Don’t have an account? <Link to="/registration" className="text-blue-600 hover:underline">Register</Link>
-          <p>Or Return To  <Link to="/" className="text-blue-600 hover:underline">Home</Link></p> 
+          Don’t have an account?{" "}
+          <Link
+            to="/registration"
+            className="text-blue-600 hover:underline"
+          >
+            Register
+          </Link>
+          <p>
+            Or Return To{" "}
+            <Link to="/" className="text-blue-600 hover:underline">
+              Home
+            </Link>
+          </p>
         </p>
-      
       </div>
-    </div>    
+    </div>
   );
-  
 }
+
