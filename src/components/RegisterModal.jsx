@@ -21,7 +21,7 @@ export default function InvoiceApiRegisterModal() {
 
   return (
     <div className="bg-gradient-to-br from-slate-50 via-white to-blue-50 w-full h-full overflow-auto">
-      <div className="w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+      <div className="w-full bg-white  shadow-2xl overflow-hidden ">
 
         <div className="grid lg:grid-cols-2 grid-cols-1">
 
@@ -93,8 +93,8 @@ export default function InvoiceApiRegisterModal() {
             <div className="mt-16 border-t border-slate-800 pt-8 grid grid-cols-3 gap-8">
 
               <Stat
-                value="10K+"
-                label="Invoices Generated"
+                value="100+"
+                label="Businesses Served"
               />
 
               <Stat
