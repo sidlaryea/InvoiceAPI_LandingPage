@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CreditCard, Check, X, Shield, Clock, Users, Zap } from 'lucide-react';
 import axios from 'axios';
+import {API_BASE} from "./config/api"
 
 const UpgradePage = () => {
   // States for navbar functionality
