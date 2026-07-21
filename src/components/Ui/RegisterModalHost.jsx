@@ -5,12 +5,19 @@ export default function RegisterModalHost() {
   return (
     <dialog
       id="register-modal"
-      className="backdrop:bg-black/40 backdrop:backdrop-blur-sm border-none rounded-2xl p-0 w-[90vw] max-w-6xl overflow-hidden"
+      /* 
+        NOTE: backdrop:backdrop-blur-sm is intentionally omitted.
+        backdrop-filter on ::backdrop causes a solid blur/white screen 
+        on many mobile browsers (Safari iOS, Android Chrome, Samsung Internet).
+        Simple background-color on ::backdrop is universally supported.
+      */
+      className="border-none rounded-2xl p-0 w-[90vw] max-w-6xl overflow-hidden bg-white backdrop:bg-black/40"
       style={{
         position: "fixed",
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
+        maxHeight: "90vh",
       }}
     >
       <button
