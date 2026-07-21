@@ -197,7 +197,7 @@ const initialProductState = {
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace("/InvoiceAPI_LandingPage/login");
+    window.location.replace("/login");
   };
 
   const showNotification = (message, type = 'success') => {

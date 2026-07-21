@@ -137,7 +137,7 @@ const token = localStorage.getItem("jwtToken");
   // Navbar functions (from your provided code)
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace("/InvoiceAPI_LandingPage/login");
+    window.location.replace("/login");
   };
 
   const openModal = () => setIsModalOpen(true);

@@ -114,12 +114,16 @@ export default function InvoiceDashboardPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const { profileImageUrl } = res.data;
-      setProfileImageUrl(
-        `${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`
-      );
+      if (profileImageUrl) {
+        setProfileImageUrl(
+          `${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`
+        );
+      } else {
+        setProfileImageUrl("/user-placeholder.png");
+      }
     } catch (err) {
       console.error("Failed to fetch user profile", err);
-
+      setProfileImageUrl("/user-placeholder.png");
     }
   };
 

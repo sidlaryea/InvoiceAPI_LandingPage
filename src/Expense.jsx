@@ -219,7 +219,7 @@ export default function ExpensesPage() {
   // Handle sign out
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace("/InvoiceAPI_LandingPage/login");
+    window.location.replace("/login");
   };
 
   // Handle status update

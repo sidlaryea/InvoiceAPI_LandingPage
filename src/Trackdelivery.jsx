@@ -237,7 +237,7 @@ export default function TrackDeliveryPage() {
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.replace("/InvoiceAPI_LandingPage/login");
+    window.location.replace("/login");
   };
 
   const handleChange = (e) => {
