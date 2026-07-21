@@ -14,6 +14,7 @@ function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   // const videoRef = useRef(null);
 
   // const handlePlayVideo = () => {
@@ -159,10 +160,7 @@ function Home() {
             
             <button
               type="button"
-              onClick={() => {
-                const el = document.getElementById('register-modal');
-                if (el && typeof el.showModal === 'function') el.showModal();
-              }}
+              onClick={() => setShowRegisterModal(true)}
               className="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition cursor-pointer"
             >
               Start Free — No Credit Card
@@ -497,7 +495,7 @@ function Home() {
         </div>
       </footer>
 
-      <RegisterModalHost />
+      <RegisterModalHost open={showRegisterModal} onClose={() => setShowRegisterModal(false)} />
     </div>
 
           
