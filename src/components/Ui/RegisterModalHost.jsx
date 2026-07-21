@@ -6,17 +6,15 @@ export default function RegisterModalHost() {
     <dialog
       id="register-modal"
       /* 
-        NOTE: backdrop:backdrop-blur-sm is intentionally omitted.
-        backdrop-filter on ::backdrop causes a solid blur/white screen 
-        on many mobile browsers (Safari iOS, Android Chrome, Samsung Internet).
-        Simple background-color on ::backdrop is universally supported.
+        NOTE: 
+        - backdrop:backdrop-blur-sm is intentionally omitted — it causes a solid 
+          white blur screen on many mobile browsers (Safari iOS, Android Chrome).
+        - position:fixed / top / left / transform overrides are intentionally 
+          omitted — they conflict with Safari's native dialog.showModal() centering.
+          The browser auto-centers the dialog via margin:auto when showModal() is called.
       */
       className="border-none rounded-2xl p-0 w-[90vw] max-w-6xl overflow-hidden bg-white backdrop:bg-black/40"
       style={{
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
         maxHeight: "90vh",
       }}
     >
