@@ -105,27 +105,37 @@ export default function InvoiceDashboardPage() {
     }
   };
 
-  // 🔹 Fetch User Profile
-  const fetchUserProfile = async () => {
-    const token = localStorage.getItem("jwtToken");
-    try {
-      const res = await axios.get(
-        `${API_BASE}/api/Register/profile`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const { profileImageUrl } = res.data;
-      if (profileImageUrl) {
-        setProfileImageUrl(
-          `${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`
-        );
-      } else {
-        setProfileImageUrl("/user-placeholder.png");
+ // 🔹 Fetch User Profile
+const fetchUserProfile = async () => {
+  const token = localStorage.getItem("jwtToken");
+
+  try {
+    const res = await axios.get(
+      `${API_BASE}/api/Register/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    } catch (err) {
-      console.error("Failed to fetch user profile", err);
+    );
+
+    console.log("Profile API response:", res.data);
+
+    const profileImageUrl = res.data?.profileImageUrl;
+
+    if (typeof profileImageUrl === "string" && profileImageUrl.trim() !== "") {
+      setProfileImageUrl(
+        `${API_BASE}/${profileImageUrl.replace(/\\/g, "/")}`
+      );
+    } else {
       setProfileImageUrl("/user-placeholder.png");
     }
-  };
+
+  } catch (err) {
+    console.error("Failed to fetch user profile", err);
+    setProfileImageUrl("/user-placeholder.png");
+  }
+};
 
   // 🔹 Fetch Currencies
   const fetchCurrencies = async () => {
