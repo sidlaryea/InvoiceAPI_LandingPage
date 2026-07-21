@@ -660,7 +660,7 @@ const handlePaymentSubmit = async (selectedPlan) => {
         email: formData.businessEmail,
         amount: selectedPlan.price * 100, // Paystack expects amount in kobo/pesewas
         plan: selectedPlan.name,
-        callbackUrl: `${window.location.origin}/paymentverify`
+        callbackUrl: `${window.location.origin}/api/payment/verify`
       },
       {
         headers: { Authorization: `Bearer ${token}` }
