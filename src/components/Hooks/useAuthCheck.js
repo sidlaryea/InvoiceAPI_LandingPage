@@ -7,7 +7,8 @@ const useAuthCheck = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // Check both possible token keys (Google login stores under "jwtToken")
+    const token = localStorage.getItem("jwtToken") || localStorage.getItem("token");
     if (!token) {
       navigate("/login", { replace: true });
       return;
@@ -18,12 +19,16 @@ const useAuthCheck = () => {
       const now = Date.now() / 1000; // current time in seconds
 
       if (decoded.exp < now) {
+        localStorage.removeItem("jwtToken");
         localStorage.removeItem("token");
+        localStorage.removeItem("apiKey");
         navigate("/login", { replace: true });
       }
     } catch (error) {
       console.error("token has expired", error);
+      localStorage.removeItem("jwtToken");
       localStorage.removeItem("token");
+      localStorage.removeItem("apiKey");
       navigate("/login", { replace: true });
     }
   }, [navigate]);
