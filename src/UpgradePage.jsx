@@ -225,7 +225,7 @@ const token = localStorage.getItem("jwtToken");
       {
         email: businessInfo.email,
         amount: selectedPlan.price * 100, // convert to smallest currency unit
-        callbackUrl: `${window.location.origin}/api/payment/verify`
+      callbackUrl: `${window.location.origin}/paymentverify`
       },
       {
         headers: { Authorization: `Bearer ${token}` }
