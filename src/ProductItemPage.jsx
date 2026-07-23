@@ -13,6 +13,7 @@ import AddTagModal from "./components/AddTagModel";
 import AddUpcModal from "./components/AddUPCModal";
 import Pagination from "./components/Ui/pagination";
 import { useApiInterceptor } from "./components/Hooks/useApiInterceptor";
+import {API_BASE} from "./config/api"
 
 export default function InventoryManagementPage() {
   const [search, setSearch] = useState('');
