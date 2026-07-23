@@ -186,34 +186,45 @@ const handleLogoChange = async (e) => {
       }));
     } catch (err) {
       console.error(err);
-      
+      toast.error(`Logo upload failed: ${err.message}`);
     }
   }
 };
 
 const uploadLogo = async (file) => {
   const token = localStorage.getItem('jwtToken');
+  const apiKey = localStorage.getItem('apiKey');
   const formData = new FormData();
   formData.append("file", file);
 
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+  };
+  // Add X-API-KEY if available (some endpoints require it)
+  if (apiKey) {
+    headers['X-API-KEY'] = apiKey;
+  }
+
   const response = await fetch(`${API_BASE}/api/BusinessInfo/update-logo`, {
     method: "PUT",
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers,
     body: formData,
   });
 
   if (!response.ok) {
-    throw new Error("Logo upload failed");
+    const errorText = await response.text().catch(() => '');
+    throw new Error(
+      `Logo upload failed (HTTP ${response.status})${errorText ? ': ' + errorText : ''}`
+    );
   }
 
-  // Assuming backend returns the file path or URL
+  // Try to parse response — backend may return different shapes
   const result = await response.json();
-  if (!result || typeof result.logoFilePath !== 'string') {
-    throw new Error("Invalid response from server");
+  const logoPath = result.logoFilePath || result.logoPath || result.filePath || result.path || result.url;
+  if (!logoPath || typeof logoPath !== 'string') {
+    throw new Error("Invalid response from server: no logo file path returned");
   }
-  return result.logoFilePath;
+  return logoPath;
 };
 
   const handleSave = async (section) => {
