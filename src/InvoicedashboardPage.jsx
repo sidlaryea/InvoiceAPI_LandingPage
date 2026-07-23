@@ -249,9 +249,13 @@ const chartData = last7days.map((dateKey) => {
 
  // Country info for header
   const getFlagEmoji = (code) => {
-    return code
-      ?.toUpperCase()
-      .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+    if (!code || typeof code !== 'string') return '';
+    const upper = code.toUpperCase();
+    // Only valid ISO 3166-1 alpha-2 codes (exactly 2 alphabetic chars)
+    if (!/^[A-Z]{2}$/.test(upper)) return '';
+    return [...upper]
+      .map(char => String.fromCodePoint(127397 + char.charCodeAt()))
+      .join('');
   };
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
