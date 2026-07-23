@@ -250,7 +250,7 @@ const chartData = last7days.map((dateKey) => {
  // Country info for header
   const getFlagEmoji = (code) => {
     if (!code || typeof code !== 'string') return '';
-    const upper = code.toUpperCase();
+    const upper = code.trim().toUpperCase();
     // Only valid ISO 3166-1 alpha-2 codes (exactly 2 alphabetic chars)
     if (!/^[A-Z]{2}$/.test(upper)) return '';
     return [...upper]
@@ -259,6 +259,25 @@ const chartData = last7days.map((dateKey) => {
   };
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
+
+  // Resolve header flag from currencies data (which has proper 2-letter codes from API)
+  // Fallback to getFlagEmoji if no match found in currencies
+  const resolvedHeaderFlag = (() => {
+    if (currencies.length > 0) {
+      // Try matching by countryCode from localStorage first
+      let match = currencies.find(c => c.country?.toUpperCase() === countryCode?.toUpperCase());
+      // Try matching by country name
+      if (!match && country) {
+        match = currencies.find(c => c.name?.toUpperCase() === country.toUpperCase());
+      }
+      // Try matching by currency code
+      if (!match && countryCode) {
+        match = currencies.find(c => c.code?.toUpperCase() === countryCode.toUpperCase());
+      }
+      if (match?.flag) return match.flag;
+    }
+    return getFlagEmoji(countryCode);
+  })();
 
 // 🔹 Build last 7 days expenses chart data
 const expensesChartData = last7days.map((dateKey) => {
@@ -306,7 +325,7 @@ useApiInterceptor();
           </h1>
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
             <span className="text-sm text-gray-600">Country:</span>
-            <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span>
+            <span className="font-medium">{resolvedHeaderFlag} {country}</span>
           </div>
         </div>
 
