@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from './components/DashboardLayout';
 import toast from 'react-hot-toast';
-import {API_BASE} from "./config/api"
+import {API_BASE, API_BASE0} from './config/api'
 
 const TabPanel = ({ children, value, index }) => (
   <div className={`${value !== index ? 'hidden' : ''}`}>
@@ -186,45 +186,34 @@ const handleLogoChange = async (e) => {
       }));
     } catch (err) {
       console.error(err);
-      toast.error(`Logo upload failed: ${err.message}`);
+      
     }
   }
 };
 
 const uploadLogo = async (file) => {
   const token = localStorage.getItem('jwtToken');
-  const apiKey = localStorage.getItem('apiKey');
   const formData = new FormData();
   formData.append("file", file);
 
-  const headers = {
-    'Authorization': `Bearer ${token}`,
-  };
-  // Add X-API-KEY if available (some endpoints require it)
-  if (apiKey) {
-    headers['X-API-KEY'] = apiKey;
-  }
-
   const response = await fetch(`${API_BASE}/api/BusinessInfo/update-logo`, {
     method: "PUT",
-    headers,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
     body: formData,
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(
-      `Logo upload failed (HTTP ${response.status})${errorText ? ': ' + errorText : ''}`
-    );
+    throw new Error("Logo upload failed");
   }
 
-  // Try to parse response — backend may return different shapes
+  // Assuming backend returns the file path or URL
   const result = await response.json();
-  const logoPath = result.logoFilePath || result.logoPath || result.filePath || result.path || result.url;
-  if (!logoPath || typeof logoPath !== 'string') {
-    throw new Error("Invalid response from server: no logo file path returned");
+  if (!result || typeof result.logoFilePath !== 'string') {
+    throw new Error("Invalid response from server");
   }
-  return logoPath;
+  return result.logoFilePath;
 };
 
   const handleSave = async (section) => {
@@ -671,7 +660,7 @@ const handlePaymentSubmit = async (selectedPlan) => {
         email: formData.businessEmail,
         amount: selectedPlan.price * 100, // Paystack expects amount in kobo/pesewas
         plan: selectedPlan.name,
-        callbackUrl: `${window.location.origin}/api/payment/verify`
+        callbackUrl: `${window.location.origin}/paymentverify`
       },
       {
         headers: { Authorization: `Bearer ${token}` }
