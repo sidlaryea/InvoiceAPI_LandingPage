@@ -935,6 +935,24 @@ const [selectedInvoice, setSelectedInvoice] = useState(null);
 
 
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                  <select
+                    name="countryId"
+                    value={formData.countryId}
+                    onChange={(e) => handleInputChange('countryId', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a country</option>
+                    {countries.map((country) => (
+                      <option key={country.id} value={country.id}>
+                        {getFlagEmoji(country.code)} {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
                   <textarea
