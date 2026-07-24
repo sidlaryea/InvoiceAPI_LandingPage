@@ -51,6 +51,7 @@ const SettingsPage = () => {
     phoneNumber: '',
     businessAddress: '',
     industryId: '',
+    busCountryId:'',
     logoFilePath: '',
 
     // Branding fields
@@ -250,7 +251,8 @@ const uploadLogo = async (file) => {
             taxIdNumber: formData.taxId,
             phone: formData.phoneNumber,
             address: formData.businessAddress,
-            industryId: formData.industryId,
+            industryId: formData.industryId ? Number(formData.industryId) : null,
+            countryId: formData.busCountryId ? Number(formData.busCountryId) : null,
             logoFilePath: formData.logoFilePath
             
           };
@@ -401,6 +403,7 @@ const uploadLogo = async (file) => {
               taxId: response.data.taxIdNumber,
               phoneNumber: response.data.phone,
               businessAddress: response.data.address,
+              busCountryId: response.data.countryId,
               industryId: response.data.industryId,
               logoFilePath: logoPath, // 👉 Add logo path from API with full URL
             }));
@@ -938,9 +941,9 @@ const [selectedInvoice, setSelectedInvoice] = useState(null);
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                   <select
-                    name="countryId"
-                    value={formData.countryId}
-                    onChange={(e) => handleInputChange('countryId', e.target.value)}
+                    name="busCountryId"
+                    value={formData.busCountryId}
+                    onChange={(e) => handleInputChange('busCountryId', e.target.value)}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
