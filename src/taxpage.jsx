@@ -279,18 +279,59 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
       return;
     }
 
-    if (editingTax) {
-      setTaxRates(taxRates.map(t => t.id === editingTax.id ? { ...formData, id: t.id, createdAt: t.createdAt } : t));
-    } else {
-      const newTax = {
-        ...formData,
-        id: taxRates.length + 1,
-        createdAt: new Date().toISOString().split('T')[0],
-        rate: parseFloat(formData.rate)
-      };
-      setTaxRates([...taxRates, newTax]);
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      alert("Authentication token not found.");
+      return;
     }
-    closeModal();
+
+    try {
+      if (editingTax) {
+        // Update existing tax via PUT
+        await axios.put(
+          `${API_BASE}/api/TaxComponent/${editingTax.id}`,
+          {
+            name: formData.name,
+            rate: parseFloat(formData.rate),
+            country: formData.country,
+            region: formData.region,
+            isActive: formData.isActive,
+            currencyCode: selectedCurrency?.code || 'GHS'
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        alert("Tax component updated successfully!");
+      } else {
+        // Create new tax via by-country endpoint
+        await axios.post(
+          `${API_BASE}/api/Tax/by-country`,
+          {
+            name: formData.name,
+            rate: parseFloat(formData.rate),
+            country: formData.country,
+            region: formData.region,
+            isActive: formData.isActive,
+            currencyCode: selectedCurrency?.code || 'GHS'
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        alert("Tax component added successfully!");
+      }
+      fetchTaxRates();
+      closeModalNew();
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.message || error.message));
+    }
   };
 
   const openModalNew = (tax = null) => {
