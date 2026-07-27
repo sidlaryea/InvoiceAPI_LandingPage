@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Edit2, Trash2, Plus, Tag } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE } from "../config/api";
 
 export function AddCategoryModal({ isOpen, onClose, onSaved }) {
   const [name, setName] = useState('');
