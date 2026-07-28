@@ -306,7 +306,7 @@ useApiInterceptor();
           </h1>
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
             <span className="text-sm text-gray-600">Country:</span>
-            <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span>
+            <span className="font-medium">{console.log("Country:", country, "Code:", countryCode)}{getFlagEmoji(countryCode)} {country}</span>
           </div>
         </div>
 
