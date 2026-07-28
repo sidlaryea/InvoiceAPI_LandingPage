@@ -316,7 +316,8 @@ const selectedCurrencyObj = currencies.find(c => c.code === selectedCurrency);
             country: formData.country,
             region: formData.region,
             isActive: formData.isActive,
-            currencyCode: selectedCurrency?.code || 'GHS'
+            currencyCode: selectedCurrency?.code || 'GHS',
+            productCurrencyId:formData.currencyId,
           },
           {
             headers: {
