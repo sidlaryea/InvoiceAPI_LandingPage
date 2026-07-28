@@ -167,7 +167,7 @@ const fetchUserProfile = async () => {
   useEffect(() => {
     if (currencies.length > 0) {
       const countryCode = localStorage.getItem('countryCode');
-      let currency = currencies.find(c => c.country === countryCode);
+      let currency = currencies.find(c => c.countryCode  === countryCode);
       if (!currency) {
         currency = currencies.find(c => c.code === 'GHS'); // Fallback to GHS
       }
