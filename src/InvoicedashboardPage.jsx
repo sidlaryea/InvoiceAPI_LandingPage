@@ -267,8 +267,8 @@ const chartData = last7days.map((dateKey) => {
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
   // Grab from JWT as fallback if localStorage values are empty
-  const displayCountry = country || currentCurrency?.code || 'N/A';
-  const displayCountryCode = countryCode || '';
+//   const displayCountry = country || currentCurrency?.code || 'N/A';
+//   const displayCountryCode = countryCode || '';
 
 // 🔹 Build last 7 days expenses chart data
 const expensesChartData = last7days.map((dateKey) => {
