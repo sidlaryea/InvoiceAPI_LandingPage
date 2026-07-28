@@ -167,7 +167,14 @@ const fetchUserProfile = async () => {
   useEffect(() => {
     if (currencies.length > 0) {
       const countryCode = localStorage.getItem('countryCode');
-      let currency = currencies.find(c => c.countryCode  === countryCode);
+      const country = localStorage.getItem('country');
+      // Try matching by country property (which stores the countryCode from API mapping)
+      let currency = countryCode 
+        ? currencies.find(c => c.country === countryCode || c.code === countryCode)
+        : null;
+      if (!currency && country) {
+        currency = currencies.find(c => c.country === country);
+      }
       if (!currency) {
         currency = currencies.find(c => c.code === 'GHS'); // Fallback to GHS
       }
@@ -259,6 +266,9 @@ const chartData = last7days.map((dateKey) => {
   };
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
+  // Grab from JWT as fallback if localStorage values are empty
+  const displayCountry = country || currentCurrency?.code || 'N/A';
+  const displayCountryCode = countryCode || '';
 
 // 🔹 Build last 7 days expenses chart data
 const expensesChartData = last7days.map((dateKey) => {
