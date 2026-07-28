@@ -16,65 +16,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Country code mapping: ISO 3166-1 alpha-3 → alpha-2
-const alpha3ToAlpha2 = {
-  'GHA': 'GH', 'NGA': 'NG', 'USA': 'US', 'GBR': 'GB', 'CAN': 'CA',
-  'ZAF': 'ZA', 'KEN': 'KE', 'UGA': 'UG', 'TZA': 'TZ', 'RWA': 'RW',
-  'BWA': 'BW', 'ZMB': 'ZM', 'ZWE': 'ZW', 'MWI': 'MW', 'MOZ': 'MZ',
-  'AGO': 'AO', 'NAM': 'NA', 'LSO': 'LS', 'SWZ': 'SZ', 'MDG': 'MG',
-  'SLE': 'SL', 'LBR': 'LR', 'CIV': 'CI', 'GIN': 'GN', 'SEN': 'SN',
-  'MLI': 'ML', 'BFA': 'BF', 'NER': 'NE', 'TGO': 'TG', 'BEN': 'BJ',
-  'MRT': 'MR', 'GMB': 'GM', 'CMR': 'CM', 'GAB': 'GA', 'COG': 'CG',
-  'COD': 'CD', 'CAF': 'CF', 'STP': 'ST', 'GNQ': 'GQ', 'BDI': 'BI',
-  'SOM': 'SO', 'DJI': 'DJ', 'ERI': 'ER', 'ETH': 'ET', 'SDN': 'SD',
-  'SSD': 'SS', 'EGY': 'EG', 'LBY': 'LY', 'TUN': 'TN', 'DZA': 'DZ',
-  'MAR': 'MA', 'ESH': 'EH', 'MUS': 'MU', 'SYC': 'SC', 'COM': 'KM',
-  'CPV': 'CV', 'GNB': 'GW',
-  'AUS': 'AU', 'NZL': 'NZ', 'FJI': 'FJ', 'PNG': 'PG', 'SLB': 'SB',
-  'VUT': 'VU', 'WSM': 'WS', 'TON': 'TO', 'PLW': 'PW', 'FSM': 'FM',
-  'MHL': 'MH', 'KIR': 'KI', 'TUV': 'TV', 'NRU': 'NR',
-  'CHN': 'CN', 'JPN': 'JP', 'KOR': 'KR', 'PRK': 'KP', 'MNG': 'MN',
-  'TWN': 'TW', 'HKG': 'HK', 'MAC': 'MO',
-  'IND': 'IN', 'PAK': 'PK', 'BGD': 'BD', 'LKA': 'LK', 'NPL': 'NP',
-  'BTN': 'BT', 'MDV': 'MV',
-  'THA': 'TH', 'VNM': 'VN', 'PHL': 'PH', 'IDN': 'ID', 'MYS': 'MY',
-  'SGP': 'SG', 'MMR': 'MM', 'KHM': 'KH', 'LAO': 'LA', 'BRN': 'BN',
-  'TLS': 'TL',
-  'IRN': 'IR', 'IRQ': 'IQ', 'SAU': 'SA', 'YEM': 'YE', 'OMN': 'OM',
-  'ARE': 'AE', 'QAT': 'QA', 'BHR': 'BH', 'KWT': 'KW', 'JOR': 'JO',
-  'LBN': 'LB', 'SYR': 'SY', 'ISR': 'IL', 'PSE': 'PS',
-  'AFG': 'AF', 'TKM': 'TM', 'UZB': 'UZ', 'KAZ': 'KZ', 'KGZ': 'KG',
-  'TJK': 'TJ',
-  'TUR': 'TR', 'CYP': 'CY',
-  'FRA': 'FR', 'DEU': 'DE', 'ITA': 'IT', 'ESP': 'ES', 'PRT': 'PT',
-  'NLD': 'NL', 'BEL': 'BE', 'CHE': 'CH', 'AUT': 'AT', 'POL': 'PL',
-  'CZE': 'CZ', 'SVK': 'SK', 'HUN': 'HU', 'ROU': 'RO', 'BGR': 'BG',
-  'GRC': 'GR', 'DNK': 'DK', 'SWE': 'SE', 'NOR': 'NO', 'FIN': 'FI',
-  'ISL': 'IS', 'IRL': 'IE', 'LUX': 'LU', 'MLT': 'MT', 'HRV': 'HR',
-  'BIH': 'BA', 'SRB': 'RS', 'MNE': 'ME', 'ALB': 'AL', 'MKD': 'MK',
-  'SVN': 'SI', 'LTU': 'LT', 'LVA': 'LV', 'EST': 'EE', 'BLR': 'BY',
-  'UKR': 'UA', 'MDA': 'MD', 'AZE': 'AZ', 'GEO': 'GE', 'ARM': 'AM',
-  'RUS': 'RU',
-  'MEX': 'MX', 'BRA': 'BR', 'ARG': 'AR', 'CHL': 'CL', 'COL': 'CO',
-  'PER': 'PE', 'VEN': 'VE', 'ECU': 'EC', 'BOL': 'BO', 'PRY': 'PY',
-  'URY': 'UY', 'GUY': 'GY', 'SUR': 'SR', 'TTO': 'TT', 'JAM': 'JM',
-  'CUB': 'CU', 'DOM': 'DO', 'HTI': 'HT', 'BHS': 'BS', 'BRB': 'BB',
-  'GRD': 'GD', 'LCA': 'LC', 'VCT': 'VC', 'DMA': 'DM', 'KNA': 'KN',
-  'ATG': 'AG', 'BLZ': 'BZ', 'SLV': 'SV', 'GTM': 'GT', 'HND': 'HN',
-  'NIC': 'NI', 'CRI': 'CR', 'PAN': 'PA',
-};
-
-// Normalize country code to 2-letter ISO 3166-1 alpha-2 format
-const normalizeCountryCode = (code) => {
-  if (!code || typeof code !== 'string') return '';
-  const upper = code.trim().toUpperCase();
-  // Already a valid 2-letter code
-  if (/^[A-Z]{2}$/.test(upper)) return upper;
-  // Try 3-letter to 2-letter mapping
-  if (/^[A-Z]{3}$/.test(upper)) return alpha3ToAlpha2[upper] || upper;
-  return upper;
-};
-
 export default function InvoiceDashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -200,23 +141,14 @@ const fetchUserProfile = async () => {
   const fetchCurrencies = async () => {
     try {
       const res = await axios.get(`${API_BASE}/api/Currency/GetAllCurrencies`);
-      const normalizedCountryCodes = new Map();
-      const mappedCurrencies = res.data.map(c => {
-        const normalizedCountry = normalizeCountryCode(c.countryCode);
-        // Avoid duplicate normalized codes for flag emoji generation
-        if (!normalizedCountryCodes.has(normalizedCountry)) {
-          normalizedCountryCodes.set(normalizedCountry, true);
-        }
-        return {
-          id: c.id,
-          code: c.currencyCode,
-          name: c.currencyName ?? c.currencyCode,
-          symbol: c.symbol ?? "",
-          flag: getFlagEmoji(normalizedCountry || c.countryCode),
-          country: normalizedCountry || c.countryCode,
-          rawCountry: c.countryCode
-        };
-      });
+      const mappedCurrencies = res.data.map(c => ({
+        id: c.id,
+        code: c.currencyCode,
+        name: c.currencyName ?? c.currencyCode,
+        symbol: c.symbol ?? "",
+        flag: getFlagEmoji(c.countryCode),
+        country: c.countryCode
+      }));
       setCurrencies(mappedCurrencies);
     } catch (error) {
       console.error("Failed to load currencies", error);
@@ -318,7 +250,7 @@ const chartData = last7days.map((dateKey) => {
  // Country info for header
   const getFlagEmoji = (code) => {
     if (!code || typeof code !== 'string') return '';
-    const upper = code.trim().toUpperCase();
+    const upper = code.toUpperCase();
     // Only valid ISO 3166-1 alpha-2 codes (exactly 2 alphabetic chars)
     if (!/^[A-Z]{2}$/.test(upper)) return '';
     return [...upper]
@@ -327,25 +259,6 @@ const chartData = last7days.map((dateKey) => {
   };
   const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
-
-  // Resolve header flag from currencies data (which has proper 2-letter codes from API)
-  // Fallback to getFlagEmoji if no match found in currencies
-  const resolvedHeaderFlag = (() => {
-    if (currencies.length > 0) {
-      // Try matching by countryCode from localStorage first
-      let match = currencies.find(c => c.country?.toUpperCase() === countryCode?.toUpperCase());
-      // Try matching by country name
-      if (!match && country) {
-        match = currencies.find(c => c.name?.toUpperCase() === country.toUpperCase());
-      }
-      // Try matching by currency code
-      if (!match && countryCode) {
-        match = currencies.find(c => c.code?.toUpperCase() === countryCode.toUpperCase());
-      }
-      if (match?.flag) return match.flag;
-    }
-    return getFlagEmoji(normalizeCountryCode(countryCode));
-  })();
 
 // 🔹 Build last 7 days expenses chart data
 const expensesChartData = last7days.map((dateKey) => {
@@ -393,7 +306,7 @@ useApiInterceptor();
           </h1>
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
             <span className="text-sm text-gray-600">Country:</span>
-            <span className="font-medium">{resolvedHeaderFlag} {country}</span>
+            <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span>
           </div>
         </div>
 
@@ -510,4 +423,3 @@ useApiInterceptor();
     </DashboardLayout>
   );
 }
-
