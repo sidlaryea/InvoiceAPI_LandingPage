@@ -34,8 +34,18 @@ export default function Login() {
       const decodedToken = jwtDecode(token);
 
       const userId = decodedToken.userId;
-      const country = decodedToken.CountryName;
-      const countryCode = decodedToken.CountryCode;
+      console.log(decodedToken);
+
+const country =
+  decodedToken.CountryName ||
+  decodedToken.countryName;
+
+const countryCode =
+  decodedToken.CountryCode ||
+  decodedToken.countryCode;
+
+console.log("country:", country);
+console.log("countryCode:", countryCode);
       const firstname = decodedToken.FirstName;
 
       localStorage.setItem("country", country);
@@ -87,6 +97,7 @@ export default function Login() {
       );
 
       const decodedToken = jwtDecode(result.data.token);
+      
 
       localStorage.setItem("userId", decodedToken.userId);
       localStorage.setItem("firstname", decodedToken.FirstName);
