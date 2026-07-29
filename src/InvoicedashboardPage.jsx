@@ -308,10 +308,10 @@ Hi. Here’s a glance of your business at All Branches
 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
 <span className="text-sm text-gray-600">Country:</span>
 <span className="font-medium">{console.log("Country:", country, "Code:", countryCode)}{getFlagEmoji(countryCode)} {country}
-{console.log("Country Code Raw:", countryCode)};
-{console.log("Length:", countryCode?.length)};
-{console.log("JSON:", JSON.stringify(countryCode))};
-{console.log("Chars:", [...countryCode].map(c => c.charCodeAt(0)))};
+{console.log("Country Code Raw:", countryCode)}
+{console.log("Length:", countryCode?.length)}
+{console.log("JSON:", JSON.stringify(countryCode))}
+{console.log("Chars:", [...countryCode].map(c => c.charCodeAt(0)))}
 
 </span>
 </div>

@@ -96,16 +96,26 @@ console.log("countryCode:", countryCode);
         }
       );
 
-      const decodedToken = jwtDecode(result.data.token);
-      
+     const decodedToken = jwtDecode(result.data.token);
 
-      localStorage.setItem("userId", decodedToken.userId);
-      localStorage.setItem("firstname", decodedToken.FirstName);
-      localStorage.setItem("country", decodedToken.CountryName);
-      localStorage.setItem("countryCode", decodedToken.CountryCode);
+console.log("Google Decoded Token:", decodedToken);
 
-      localStorage.setItem("jwtToken", result.data.token);
-      localStorage.setItem("firstName", result.data.firstName);
+const country =
+  decodedToken.CountryName ||
+  decodedToken.countryName;
+
+const countryCode =
+  decodedToken.CountryCode ||
+  decodedToken.countryCode;
+
+const firstname =
+  decodedToken.FirstName ||
+  decodedToken.firstName;
+
+localStorage.setItem("userId", decodedToken.userId);
+localStorage.setItem("firstname", firstname);
+localStorage.setItem("country", country);
+localStorage.setItem("countryCode", countryCode);
 
       const token = localStorage.getItem("jwtToken");
 
