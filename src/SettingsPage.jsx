@@ -1,5 +1,6 @@
 import React, { useState,useEffect } from 'react';
 import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 import {
   User,
   Building2,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from './components/DashboardLayout';
 import toast from 'react-hot-toast';
-import {API_BASE, API_BASE0} from './config/api'
+import {API_BASE,} from './config/api'
 
 const TabPanel = ({ children, value, index }) => (
   <div className={`${value !== index ? 'hidden' : ''}`}>
@@ -312,6 +313,16 @@ const uploadLogo = async (file) => {
       });
 
       if (response.status === 200) {
+
+        if (section === "Profile" && response.data.token) {
+          const decoded = jwtDecode(response.data.token);
+
+          localStorage.setItem("jwtToken", response.data.token);
+          localStorage.setItem("country", decoded.CountryName || decoded.countryName || "");
+          localStorage.setItem("countryCode", decoded.CountryCode || decoded.countryCode || "");
+        }
+        console.log("Update Response:", response.data);
+
         alert(`${section} settings saved successfully!`);
         toast.success(`${section}  Information updated successfully!`);
         await fetchUserProfile();
