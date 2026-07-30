@@ -81,15 +81,15 @@ const [profileImageUrl, setProfileImageUrl] = useState("./user-placeholder.png")
   };
 
 
-const country = localStorage.getItem('country');
+//const country = localStorage.getItem('country');
 const countryCode = localStorage.getItem('countryCode');
 
 // Flag helper function
-const getFlagEmoji = (code) => {
-  return code
-    ?.toUpperCase()
-    .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
-};
+// const getFlagEmoji = (code) => {
+//   return code
+//     ?.toUpperCase()
+//     .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+// };
 
 // Currency helper function
 const getCurrencySymbol = (countryCode) => {
@@ -565,8 +565,8 @@ useApiInterceptor(); // Initialize the API interceptor
       <p className="text-gray-600">Create and manage your payments efficiently!</p>
      </div>
       <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-1 text-sm bg-gray-50">
-          <span className="text-xl">{getFlagEmoji(countryCode)}</span>
-          <span>{country}</span>
+          {/* <span className="text-xl">{getFlagEmoji(countryCode)}</span>
+          <span>{country}</span> */}
         </div>
      
    </div>

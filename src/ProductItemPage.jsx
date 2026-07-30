@@ -113,15 +113,15 @@ const initialProductState = {
   };
   };
 
-  const country = localStorage.getItem('country');
-  const countryCode = localStorage.getItem('countryCode');
+  // const country = localStorage.getItem('country');
+  // const countryCode = localStorage.getItem('countryCode');
 
   // Flag helper function
-  const getFlagEmoji = (code) => {
-    return code
-      ?.toUpperCase()
-      .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
-  };
+  // const getFlagEmoji = (code) => {
+  //   return code
+  //     ?.toUpperCase()
+  //     .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+  // };
 
   //for image upload old and new image //
    const handleFileChange = (e) => {
@@ -600,11 +600,11 @@ useApiInterceptor(); // Initialize the API interceptor
 
             {/* Country Selector */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Country:</label>
-              <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-1 text-sm bg-gray-50">
-                <span className="text-xl">{getFlagEmoji(countryCode)}</span>
-                <span>{country}</span>
-              </div>
+              {/* <label className="text-sm font-medium text-gray-700">Country:</label> */}
+              {/* <div className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-1 text-sm bg-gray-50"> */}
+                {/* <span className="text-xl">{getFlagEmoji(countryCode)}</span>
+                <span>{country}</span> */}
+              {/* </div> */}
             </div>
           </div>
         </div>

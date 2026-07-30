@@ -76,16 +76,16 @@ export default function ExpensesPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Country info for header
-  const getFlagEmoji = (code) => {
-    return code
-      ?.toUpperCase()
-      .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
-  };
+  // const getFlagEmoji = (code) => {
+  //   return code
+  //     ?.toUpperCase()
+  //     .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+  // };
   const getCurrencySymbol = (code) => {
     const currency = currencies.find(c => c.countryCode === code);
     return currency ? currency.symbol : 'GH₵';
   };
-  const country = localStorage.getItem('country');
+  //const country = localStorage.getItem('country');
   const countryCode = localStorage.getItem('countryCode');
   
 
@@ -621,8 +621,8 @@ export default function ExpensesPage() {
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-600">Country:</span>
-                <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span>
+                {/* <span className="text-sm text-gray-600">Countrys:</span>
+                <span className="font-medium">{getFlagEmoji(countryCode)} {country}</span> */}
               </div>
             </div>
           </div>

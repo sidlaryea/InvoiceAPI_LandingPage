@@ -258,8 +258,8 @@ return [...upper]
 .map(char => String.fromCodePoint(127397 + char.charCodeAt()))
 .join('');
 };
-const country = localStorage.getItem('country');
-const countryCode = localStorage.getItem('countryCode');
+// const country = localStorage.getItem('country');
+// const countryCode = localStorage.getItem('countryCode');
 
 // 🔹 Build last 7 days expenses chart data
 const expensesChartData = last7days.map((dateKey) => {
@@ -306,14 +306,14 @@ setConfirmNewPassword,
 Hi. Here’s a glance of your business at All Branches
 </h1>
 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
-<span className="text-sm text-gray-600">Country:</span>
+{/* <span className="text-sm text-gray-600">Country:</span>
 <span className="font-medium">{console.log("Country:", country, "Code:", countryCode)}{getFlagEmoji(countryCode)} {country}
 {console.log("Country Code Raw:", countryCode)}
 {console.log("Length:", countryCode?.length)}
 {console.log("JSON:", JSON.stringify(countryCode))}
 {console.log("Chars:", [...countryCode].map(c => c.charCodeAt(0)))}
 
-</span>
+</span> */}
 </div>
 </div>
 
