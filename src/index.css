@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+/* Safari & iOS smooth scrolling and rendering fixes */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Prevent text resize on orientation change in Safari */
+input,
+textarea,
+select,
+button {
+  font-size: 16px;
+}
+
+/* Safe area padding for notched iOS devices */
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 16px);
+  }
+}
